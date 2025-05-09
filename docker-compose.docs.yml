@@ -1,0 +1,16 @@
+services:
+  docs:
+    image: news_monitoring_local_docs
+    container_name: news_monitoring_local_docs
+    build:
+      context: .
+      dockerfile: ./compose/local/docs/Dockerfile
+    env_file:
+      - ./.envs/.local/.django
+    volumes:
+      - ./docs:/docs:z
+      - ./config:/app/config:z
+      - ./news_monitoring:/app/news_monitoring:z
+    ports:
+      - '9000:9000'
+    command: /start-docs

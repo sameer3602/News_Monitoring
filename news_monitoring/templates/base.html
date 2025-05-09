@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}News Monitoring{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md py-4 px-8 flex items-center justify-between">
+        <!-- Logo -->
+        <a href="{% url 'home' %}" class="text-xl font-bold text-blue-600">NewsMonitor</a>
+
+        <!-- Center Nav Links -->
+       {% if user.is_authenticated %}
+        <div class="space-x-6">
+            <a href="{% url 'source:view_sources' %}" class="text-gray-700 hover:text-blue-600">View Sources</a>
+            <a href="{% url 'source:add_source' %}" class="text-gray-700 hover:text-blue-600">Add Source</a>
+            <a href="{% url 'story:view_stories' %}" class="text-gray-700 hover:text-blue-600">View Stories</a>
+            <a href="{% url 'story:add_story' %}" class="text-gray-700 hover:text-blue-600">Add Story</a>
+        </div>
+    {% endif %}
+
+        <!-- Right Side Auth -->
+        <div class="flex items-center space-x-4">
+            {% if user.is_authenticated %}
+                <span class="text-gray-600">Hi, {{ user.username }}</span>
+                <a href="{% url 'users:logout' %}" class="text-red-500 hover:underline">Logout</a>
+            {% else %}
+                <a href="{% url 'users:login' %}" class="text-blue-500 hover:underline">Login</a>
+                <a href="{% url 'users:signup' %}" class="text-blue-500 hover:underline">Sign Up</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-6">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white text-center py-4">
+        <p>&copy; 2025 NewsMonitor. All rights reserved.</p>
+    </footer>
+
+</body>
+{% block extrajs %}
+{% endblock %}
+
+
+</html>
+

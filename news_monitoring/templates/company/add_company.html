@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Company{% endblock %}
+
+{% block content %}
+    <!-- Modal Overlay (Visible by default) -->
+    <div id="companyModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <!-- Modal Box -->
+        <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-md relative">
+            <h2 class="text-xl font-bold mb-4">Add Company</h2>
+
+            <!-- Close button -->
+            <button onclick="document.getElementById('companyModal').classList.add('hidden')"
+                    class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-xl font-bold">&times;</button>
+
+            <!-- Form -->
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="mb-4">
+                    {{ form.name.label_tag }}<br>
+                    {{ form.name }}<br><br>
+                </div>
+
+                <div class="mb-4">
+                    {{ form.domain_name.label_tag }}<br>
+                    {{ form.domain_name }}<br><br>
+                    {% if form.domain_name.errors %}
+                        <div class="text-red-500 text-sm">
+                            {% for error in form.domain_name.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" name="company_submit"
+                            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                        Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

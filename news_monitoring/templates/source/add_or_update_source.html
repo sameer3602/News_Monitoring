@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto p-6 bg-white rounded shadow">
+    <h2 class="text-2xl font-semibold mb-4">
+        {% if is_update %}Update Source{% else %}Add Source{% endif %}
+    </h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Name Field -->
+        <div class="mb-4">
+            {{ form.name.label_tag }}
+            {% render_field form.name class="w-full border px-3 py-2 rounded mt-1" %}
+            {% if form.name.errors %}
+                <p class="text-red-500 text-sm">{{ form.name.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- URL Field -->
+        <div class="mb-4">
+            {{ form.url.label_tag }}
+            {% render_field form.url class="w-full border px-3 py-2 rounded mt-1" %}
+            {% if form.url.errors %}
+                <p class="text-red-500 text-sm">{{ form.url.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Tagged Companies -->
+        <div class="mb-4">
+            {{ form.tagged_companies.label_tag }}
+            {% render_field form.tagged_companies class="select2 w-full border px-3 py-2" %}
+            {% if form.tagged_companies.errors %}
+                <p class="text-red-500 text-sm">{{ form.tagged_companies.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Submit Button -->
+        <div class="mt-6">
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save Source</button>
+        </div>
+
+        <div class="flex justify-end">
+            {% if not has_sources %}
+                <a href="{% url 'company:add_company' %}" class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 whitespace-nowrap">
+                    + Add Company
+                </a>
+            {% endif %}
+        </div>
+
+        {% if form.company.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.company.errors.0 }}</p>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}
+
+
+{% block extrajs %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        // Company field: single-select
+        $('#id_company').select2({
+            placeholder: "Search for a company...",
+            allowClear: true,
+            ajax: {
+                url: "{% url 'company:search_companies' %}",
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term };
+                },
+                processResults: function (data) {
+                    return { results: data.results };
+                },
+                cache: true
+            }
+        });
+
+        // Tagged Companies: multi-select
+        const taggedCompaniesSelect = $('#id_tagged_companies');
+        taggedCompaniesSelect.select2({
+            placeholder: "Search and select tagged companies...",
+            multiple: true,
+            ajax: {
+                url: "{% url 'company:search_companies' %}",
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term };
+                },
+                processResults: function (data) {
+                    return { results: data.results };
+                },
+                cache: true
+            }
+        });
+
+        // Preload selected companies for update
+        {% if is_update %}
+            const preselectedCompanies = {{ tagged_companies_data|safe }};
+            preselectedCompanies.forEach(function (item) {
+                const option = new Option(item.text, item.id, true, true);
+                taggedCompaniesSelect.append(option).trigger('change');
+            });
+        {% endif %}
+    });
+</script>
+{% endblock %}
