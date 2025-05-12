@@ -17,6 +17,12 @@
         <!-- Data will be inserted here by AJAX -->
     </tbody>
 </table>
+<div class="flex justify-center space-x-4 mt-4 items-center" id="pagination-controls">
+    <button id="prevPage" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Prev</button>
+    <span id="pageNumber" class="px-4 py-2 font-medium text-gray-700">Page 1</span>
+    <button id="nextPage" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Next</button>
+</div>
+
 
 <!-- Delete Confirmation Modal -->
 <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
@@ -34,67 +40,103 @@
 {% block extrajs %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-$(document).ready(function() {
-    let sourceToDelete = null;
+  $(document).ready(function() {
+    let currentPage = 1;
+    let totalPages = 1;
 
-    // Fetch sources via AJAX
-    $.ajax({
-        url: "{% url 'source:get_sources' %}",
-        method: "GET",
-        success: function(response) {
-            const sources = response.sources;
-            let sourceRows = '';
+    function fetchSources(page = 1) {
+        $.ajax({
+            url: "{% url 'source:get_sources' %}",
+            method: "GET",
+            data: { page: page },
+            success: function(response) {
+                const sources = response.sources;
+                let sourceRows = '';
 
-            sources.forEach(function(source) {
-                sourceRows += `
-                    <tr class="hover:bg-gray-50" id="source-row-${source.pk}">
-                        <td class="border px-4 py-2">${source.name}</td>
-                        <td class="border px-4 py-2">
-                            <a href="${source.url}" target="_blank" class="text-blue-600 hover:text-blue-800">${source.url}</a>
-                        </td>
-                        <td class="border px-4 py-2">${source.company.name}</td>
-                        <td class="border px-4 py-2">${source.tagged_companies.join(', ')}</td>
+                sources.forEach(function(source) {
+                    sourceRows += `
+                        <tr class="hover:bg-gray-50" id="source-row-${source.pk}">
+                            <td class="border px-4 py-2">${source.name}</td>
+                            <td class="border px-4 py-2">
+                                <a href="${source.url}" target="_blank" class="text-blue-600 hover:text-blue-800">${source.url}</a>
+                            </td>
+                            <td class="border px-4 py-2">${source.company.name}</td>
+                            <td class="border px-4 py-2">${source.tagged_companies.join(', ')}</td>
+                            <td class="border px-4 py-2">
+                                <div class="flex space-x-4">
+                                    <a href="/sources/update/${source.pk}/" class="text-blue-600 hover:text-blue-800">Edit</a>
+                                    <button class="text-red-600 hover:text-red-800 delete-btn" data-id="${source.pk}">Delete</button>
+                                    <button class="text-green-600 hover:text-green-800 fetch-btn" data-id="${source.pk}">Fetch</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
 
-                        <td class="border px-4 py-2">
-                            <div class="flex space-x-4">
-                                <a href="/sources/update/${source.pk}/" class="text-blue-600 hover:text-blue-800">Edit</a>
-                                <button class="text-red-600 hover:text-red-800 delete-btn" data-id="${source.pk}">Delete</button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
+                $('#sourcesTable tbody').html(sourceRows);
 
-            $('#sourcesTable tbody').html(sourceRows);
-        },
-        error: function(xhr, status, error) {
-            console.log("Error fetching sources:", error);
+                // Update pagination state
+                currentPage = response.page_number;
+                totalPages = response.total_pages;
+
+                // Update page number display
+                $('#pageNumber').text(`Page ${currentPage} of ${totalPages}`);
+
+                // Show/hide pagination buttons
+                if (response.has_previous) {
+                    $('#prevPage').show();
+                } else {
+                    $('#prevPage').hide();
+                }
+
+                if (response.has_next) {
+                    $('#nextPage').show();
+                } else {
+                    $('#nextPage').hide();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log("Error fetching sources:", error);
+            }
+        });
+    }
+
+    // Initial fetch
+    fetchSources();
+
+    // Pagination button events
+    $('#prevPage').on('click', function() {
+        if (currentPage > 1) {
+            fetchSources(currentPage - 1);
         }
     });
 
-    // Open modal on delete click
+    $('#nextPage').on('click', function() {
+        if (currentPage < totalPages) {
+            fetchSources(currentPage + 1);
+        }
+    });
+
+    // Delete modal logic
+    let sourceToDelete = null;
     $(document).on('click', '.delete-btn', function() {
         sourceToDelete = $(this).data('id');
         $('#deleteModal').removeClass('hidden').addClass('flex');
     });
 
-    // Cancel deletion
     $('#cancelDelete').on('click', function() {
         sourceToDelete = null;
         $('#deleteModal').addClass('hidden').removeClass('flex');
     });
 
-    // Confirm deletion via AJAX
     $('#confirmDelete').on('click', function() {
         if (sourceToDelete !== null) {
             $.ajax({
                 url: `/sources/delete/${sourceToDelete}/`,
                 method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
                 success: function() {
-                    $(`#source-row-${sourceToDelete}`).remove();
+                    fetchSources(currentPage);
                     $('#deleteModal').addClass('hidden').removeClass('flex');
                     sourceToDelete = null;
                 },
@@ -105,6 +147,26 @@ $(document).ready(function() {
             });
         }
     });
+
+    // Fetch RSS stories
+    $(document).on('click', '.fetch-btn', function () {
+        const sourceId = $(this).data('id');
+        $.ajax({
+            url: "{% url 'source:fetch_rss' %}",
+            method: "GET",
+            data: {
+                source_id: sourceId,
+                csrfmiddlewaretoken: "{{ csrf_token }}"
+            },
+            success: function (response) {
+                alert(response.message);
+            },
+            error: function () {
+                alert("Failed to fetch stories from RSS.");
+            }
+        });
+    });
 });
+
 </script>
 {% endblock %}

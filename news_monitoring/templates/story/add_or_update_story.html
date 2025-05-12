@@ -4,18 +4,18 @@
 {% block content %}
 <div class="max-w-2xl mx-auto p-6 bg-white rounded shadow">
     <h2 class="text-2xl font-semibold mb-4">
-        {% if is_update %}Update Source{% else %}Add Source{% endif %}
+        {% if is_update %}Update Story{% else %}Add Story{% endif %}
     </h2>
 
     <form method="post">
         {% csrf_token %}
 
-        <!-- Name Field -->
+        <!-- Title Field -->
         <div class="mb-4">
-            {{ form.name.label_tag }}
-            {% render_field form.name class="w-full border px-3 py-2 rounded mt-1" %}
-            {% if form.name.errors %}
-                <p class="text-red-500 text-sm">{{ form.name.errors.0 }}</p>
+            {{ form.title.label_tag }}
+            {% render_field form.title class="w-full border px-3 py-2 rounded mt-1" %}
+            {% if form.title.errors %}
+                <p class="text-red-500 text-sm">{{ form.title.errors.0 }}</p>
             {% endif %}
         </div>
 
@@ -25,6 +25,34 @@
             {% render_field form.url class="w-full border px-3 py-2 rounded mt-1" %}
             {% if form.url.errors %}
                 <p class="text-red-500 text-sm">{{ form.url.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Published Date Field with Datepicker -->
+        <div class="mb-4">
+            {{ form.published_date.label_tag }}
+            {% render_field form.published_date class="w-full border px-3 py-2 rounded mt-1" %}
+            {% if form.published_date.errors %}
+                <p class="text-red-500 text-sm">{{ form.published_date.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Source Field -->
+        <div class="mb-4">
+            {{ form.source.label_tag }}
+            {% render_field form.source class="w-full border px-3 py-2 rounded mt-1" %}
+            {% if form.source.errors %}
+                <p class="text-red-500 text-sm">{{ form.source.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+
+        <!-- Body Text Field -->
+        <div class="mb-4">
+            {{ form.body_text.label_tag }}
+            {% render_field form.body_text class="w-full border px-3 py-2 rounded mt-1" rows="6" %}
+            {% if form.body_text.errors %}
+                <p class="text-red-500 text-sm">{{ form.body_text.errors.0 }}</p>
             {% endif %}
         </div>
 
@@ -39,38 +67,31 @@
 
         <!-- Submit Button -->
         <div class="mt-6">
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save Source</button>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                {% if is_update %}Update{% else %}Add{% endif %} Story
+            </button>
         </div>
-
-        <div class="flex justify-end">
-            {% if not has_sources %}
-                <a href="{% url 'company:add_company' %}" class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 whitespace-nowrap">
-                    + Add Company
-                </a>
-            {% endif %}
-        </div>
-
-        {% if form.company.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ form.company.errors.0 }}</p>
-        {% endif %}
     </form>
 </div>
 {% endblock %}
-
 
 {% block extrajs %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+<!-- Flatpickr for Date Picker -->
+<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <script>
     $(document).ready(function () {
-        // Tagged Companies: multi-select
+        // Tagged Companies: multi-select with autocomplete search
         $('#id_tagged_companies').select2({
             placeholder: "Search and select tagged companies...",
             multiple: true,
             ajax: {
-                url: "{% url 'company:search_companies' %}",
+                url: "{% url 'company:search_companies' %}",  // Endpoint to search companies dynamically
                 dataType: 'json',
                 delay: 250,
                 data: function (params) {
@@ -93,7 +114,12 @@
                 $('#id_tagged_companies').append(option).trigger('change');
             });
         {% endif %}
+
+        // Initialize Flatpickr for Published Date Field
+        flatpickr("#id_published_date", {
+            dateFormat: "Y-m-d",  // Set the date format you prefer
+            allowInput: true,  // Allow manual input
+        });
     });
 </script>
-
 {% endblock %}

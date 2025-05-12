@@ -9,7 +9,7 @@ class Story(models.Model):
     body_text = models.TextField()
     url = models.URLField(max_length=200)
     published_date = models.DateTimeField()
-    sources = models.ForeignKey(Source, on_delete=models.CASCADE)
+    source = models.ForeignKey(Source, on_delete=models.CASCADE,null=True,blank=True)
     tagged_companies = models.ManyToManyField(Company)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

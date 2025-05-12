@@ -17,10 +17,10 @@
         <!-- Center Nav Links -->
        {% if user.is_authenticated %}
         <div class="space-x-6">
-            <a href="{% url 'source:view_sources' %}" class="text-gray-700 hover:text-blue-600">View Sources</a>
-            <a href="{% url 'source:add_source' %}" class="text-gray-700 hover:text-blue-600">Add Source</a>
-            <a href="{% url 'story:view_stories' %}" class="text-gray-700 hover:text-blue-600">View Stories</a>
-            <a href="{% url 'story:add_story' %}" class="text-gray-700 hover:text-blue-600">Add Story</a>
+            <a href="{% url 'source:view_sources' %}" class="text-gray-700 hover:text-blue-600 font-bold">View Sources</a>
+            <a href="{% url 'source:add_source' %}" class="text-gray-700 hover:text-blue-600 font-bold">Add Source</a>
+            <a href="{% url 'story:view_stories' %}" class="text-gray-700 hover:text-blue-600 font-bold">View Stories</a>
+            <a href="{% url 'story:add_story' %}" class="text-gray-700 hover:text-blue-600 font-bold">Add Story</a>
         </div>
     {% endif %}
 
