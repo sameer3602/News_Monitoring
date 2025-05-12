@@ -28,7 +28,7 @@
             {% endif %}
         </div>
 
-        <!-- Published Date Field with Datepicker -->
+        <!-- Published Date Field -->
         <div class="mb-4">
             {{ form.published_date.label_tag }}
             {% render_field form.published_date class="w-full border px-3 py-2 rounded mt-1" %}
@@ -36,16 +36,6 @@
                 <p class="text-red-500 text-sm">{{ form.published_date.errors.0 }}</p>
             {% endif %}
         </div>
-
-        <!-- Source Field -->
-        <div class="mb-4">
-            {{ form.source.label_tag }}
-            {% render_field form.source class="w-full border px-3 py-2 rounded mt-1" %}
-            {% if form.source.errors %}
-                <p class="text-red-500 text-sm">{{ form.source.errors.0 }}</p>
-            {% endif %}
-        </div>
-
 
         <!-- Body Text Field -->
         <div class="mb-4">
@@ -56,10 +46,22 @@
             {% endif %}
         </div>
 
-        <!-- Tagged Companies -->
+        <!-- Source Field (Read-only) -->
         <div class="mb-4">
-            {{ form.tagged_companies.label_tag }}
-            {% render_field form.tagged_companies class="select2 w-full border px-3 py-2" %}
+            <label for="id_source" class="block font-medium">Source</label>
+            <input type="text" id="id_source" class="w-full border px-3 py-2 rounded mt-1 bg-gray-100" value="{{ source|default:"N/A" }}" readonly>
+            <input type="hidden" name="source" value="{{ source.id }}">
+        </div>
+
+        <!-- Tagged Companies with Autocomplete -->
+        <div class="mb-4">
+            <label class="block font-medium">Tagged Companies</label>
+            <select name="tagged_companies" id="tagged-companies" multiple class="w-full border px-3 py-2 rounded" size="6">
+                {% for company in form.fields.tagged_companies.queryset %}
+                    <option value="{{ company.pk }}">{{ company.name }}</option>
+                {% endfor %}
+            </select>
+
             {% if form.tagged_companies.errors %}
                 <p class="text-red-500 text-sm">{{ form.tagged_companies.errors.0 }}</p>
             {% endif %}
@@ -75,50 +77,47 @@
 </div>
 {% endblock %}
 
-{% block extrajs %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-<!-- Flatpickr for Date Picker -->
+{% block extrajs %}
+<!-- Flatpickr -->
 <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
+<!-- Tom Select -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
 <script>
-    $(document).ready(function () {
-        // Tagged Companies: multi-select with autocomplete search
-        $('#id_tagged_companies').select2({
-            placeholder: "Search and select tagged companies...",
-            multiple: true,
-            ajax: {
-                url: "{% url 'company:search_companies' %}",  // Endpoint to search companies dynamically
-                dataType: 'json',
-                delay: 250,
-                data: function (params) {
-                    return { q: params.term };
-                },
-                processResults: function (data) {
-                    return {
-                        results: data.results
-                    };
-                },
-                cache: true
+    document.addEventListener("DOMContentLoaded", function () {
+        // Date picker
+        flatpickr("#id_published_date", {
+            dateFormat: "Y-m-d",
+            allowInput: true,
+        });
+
+        // Pre-select tagged companies
+        const prefilledCompanies = {{ tagged_companies_data|safe }};
+        const select = document.getElementById('tagged-companies');
+
+        prefilledCompanies.forEach(company => {
+            const option = select.querySelector(`option[value="${company.id}"]`);
+            if (option) {
+                option.selected = true;
+            } else {
+                // Add if not in queryset already (e.g., due to limited queryset)
+                const newOption = new Option(company.name, company.id, true, true);
+                select.appendChild(newOption);
             }
         });
 
-        // Prefill tagged companies only if updating
-        {% if is_update %}
-            var preselectedTaggedCompanies = {{ tagged_companies_data|safe }};
-            preselectedTaggedCompanies.forEach(function(company) {
-                var option = new Option(company.text, company.id, true, true);
-                $('#id_tagged_companies').append(option).trigger('change');
-            });
-        {% endif %}
-
-        // Initialize Flatpickr for Published Date Field
-        flatpickr("#id_published_date", {
-            dateFormat: "Y-m-d",  // Set the date format you prefer
-            allowInput: true,  // Allow manual input
+        // Tom Select
+        new TomSelect(select, {
+            plugins: ['remove_button'],
+            maxOptions: 500,
+            create: false,
+            persist: false,
+            hideSelected: true,
+            placeholder: 'Search and select companies...'
         });
     });
 </script>

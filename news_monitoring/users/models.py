@@ -16,7 +16,7 @@ class User(AbstractUser):
     first_name = None  # type: ignore
     last_name = None   # type: ignore
 
-    company = models.ForeignKey(Company, null=True, blank=True, on_delete=models.SET_NULL, related_name='users')
+    company = models.ForeignKey(Company, null=True, blank=True, on_delete=models.SET_NULL, related_name='companyuser')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -1,7 +1,7 @@
-from django.core.paginator import Paginator
+from django.db.models import Q
 from django.utils import timezone
 from django.http import JsonResponse
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from news_monitoring.forms.sourceForm import SourceForm
 from django.shortcuts import render, redirect
@@ -10,6 +10,7 @@ from news_monitoring.company.models import Company
 from news_monitoring.source.models import Source
 from news_monitoring.story.models import Story
 import feedparser
+from django.core.paginator import Paginator
 
 
 @login_required
@@ -18,126 +19,60 @@ def add_or_update_source(request, pk=None):
     source = get_object_or_404(Source, pk=pk) if is_update else None
 
     if request.method == 'POST':
-        name = request.POST.get('name')
-        url = request.POST.get('url')
-        company_id = str(request.user.company_id)
-        tagged_company_ids = request.POST.getlist('tagged_companies')
-
-        if name and url and company_id:
-            all_company_ids = [company_id] + tagged_company_ids
-            companies = Company.objects.in_bulk(all_company_ids)
-
-            company = companies.get(int(company_id))
-            tagged_companies = [companies[int(tcid)] for tcid in tagged_company_ids if int(tcid) in companies]
+        form = SourceForm(request.POST)
+        if form.is_valid():
+            source_data = form.cleaned_data
+            company = request.user.company
+            tagged_companies = source_data['tagged_companies']
 
             if is_update:
-                source.name = name
-                source.url = url
+                source.name = source_data['name']
+                source.url = source_data['url']
                 source.company = company
                 source.updated_by = request.user
                 source.save()
                 source.tagged_companies.set(tagged_companies)
             else:
                 source = Source.objects.create(
-                    name=name,
-                    url=url,
+                    name=source_data['name'],
+                    url=source_data['url'],
                     company=company,
                     created_by=request.user
                 )
                 source.tagged_companies.set(tagged_companies)
 
             return redirect('source:view_sources')
-
     else:
         if is_update:
-            initial = {
+            tagged_ids = list(source.tagged_companies.values_list('id', flat=True))
+            form = SourceForm(initial={
                 'name': source.name,
                 'url': source.url,
-            }
-            form = SourceForm(initial=initial)
-
-            tagged_companies_data = [
-                {'id': c.id, 'text': c.name}
-                for c in source.tagged_companies.all()
-            ]
+                'tagged_companies': tagged_ids,
+            })
         else:
             form = SourceForm()
-            tagged_companies_data = []
+
+        # Always allow all companies for searching
+        form.fields['tagged_companies'].queryset = Company.objects.all()
 
     return render(request, 'source/add_or_update_source.html', {
         'form': form,
         'is_update': is_update,
-        'tagged_companies_data': tagged_companies_data,
+        'has_sources': Source.objects.filter(company=request.user.company).exists()
     })
 
-# @login_required
-# def add_or_update_source(request, pk=None):   #merged the add_source and update_source views here
-#     is_update = pk is not None
-#     # source = get_object_or_404(Source, pk=pk) if is_update else None
-#     source = get_object_or_404(Source.objects.prefetch_related('tagged_companies'), pk=pk) if is_update else None
-#
-#     if request.method == 'POST':
-#         name = request.POST.get('name')
-#         url = request.POST.get('url')
-#         company_id = request.user.company_id
-#         tagged_company_ids = request.POST.getlist('tagged_companies')
-#
-#         if name and url and company_id:
-#             # company = Company.objects.get(id=company_id)
-#             # tagged_companies = Company.objects.filter(id__in=tagged_company_ids)
-#             all_company_ids = [company_id] + tagged_company_ids
-#             companies = Company.objects.prefetch_related(all_company_ids)
-#
-#             company = companies.get(company_id)
-#             tagged_companies = [companies[tcid] for tcid in tagged_company_ids if tcid in companies]
-#
-#             if is_update:
-#                 # Update existing source
-#                 source.name = name
-#                 source.url = url
-#                 source.company = company
-#                 source.updated_by = request.user
-#                 source.save()
-#                 source.tagged_companies.set(tagged_companies)
-#             else:
-#                 # Create new source
-#                 source = Source.objects.create(
-#                     name=name,
-#                     url=url,
-#                     company=company,
-#                     created_by=request.user
-#                 )
-#                 source.tagged_companies.set(tagged_companies)
-#
-#             return redirect('source:view_sources')
-#
-#     else:
-#         if is_update:
-#             initial = {
-#                 'name': source.name,
-#                 'url': source.url,
-#                 'tagged_companies': source.tagged_companies.all(),
-#             }
-#             form = SourceForm(initial=initial)
-#             # Preload tagged companies for Select2
-#             tagged_companies_data = [
-#                 {'id': c.id, 'text': c.name}
-#                 for c in source.tagged_companies.all()
-#             ]
-#         else:
-#             form = SourceForm()
-#             tagged_companies_data = []
-#
-#     return render(request, 'source/add_or_update_source.html', {
-#         'form': form,
-#         'is_update': is_update,
-#         'tagged_companies_data': tagged_companies_data,
-#     })
 
 
-@login_required
 def view_sources(request):
-    return render(request, 'source/view_sources.html', )
+    sources = Source.objects.select_related('company').prefetch_related('tagged_companies').all()
+    paginator = Paginator(sources, 5)  # 10 sources per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'source/view_sources.html', {
+        'page_obj': page_obj,
+    })
 
 
 @login_required
@@ -154,25 +89,6 @@ def delete_source(request, pk):
             return JsonResponse({'success': False, 'message': 'You are not authorized to delete this source.'})
     return JsonResponse({'success': False, 'message': 'Invalid request method.'})
 
-#
-# def get_sources(request):
-#     sources = Source.objects.select_related('company').prefetch_related('tagged_companies')
-#     if not request.user.is_staff:
-#         sources = sources.filter(created_by=request.user)
-#
-#     source_list = []
-#     for source in sources:
-#         source_list.append({
-#             "pk": source.pk,
-#             "name": source.name,
-#             "url": source.url,
-#             "company": {
-#                 "name": source.company.name
-#             },
-#             "tagged_companies": [company.name for company in source.tagged_companies.all()]
-#         })
-#
-#     return JsonResponse({"sources": source_list})
 
 @login_required
 def get_sources(request):

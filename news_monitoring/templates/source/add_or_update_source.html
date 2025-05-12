@@ -28,21 +28,26 @@
             {% endif %}
         </div>
 
-        <!-- Tagged Companies -->
         <div class="mb-4">
-            {{ form.tagged_companies.label_tag }}
-            {% render_field form.tagged_companies class="select2 w-full border px-3 py-2" %}
+            <label class="block font-medium">Tagged Companies</label>
+<!--            <input type="text" id="company-search" placeholder="Search companies..." class="w-full border px-3 py-2 rounded mt-1 mb-2" onkeyup="filterCompanies()">-->
+
+            {% render_field form.tagged_companies id="tagged-companies" class="w-full border px-3 py-2 rounded" %}
+
+
             {% if form.tagged_companies.errors %}
                 <p class="text-red-500 text-sm">{{ form.tagged_companies.errors.0 }}</p>
             {% endif %}
         </div>
+
+
 
         <!-- Submit Button -->
         <div class="mt-6">
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save Source</button>
         </div>
 
-        <div class="flex justify-end">
+        <div class="flex justify-end mt-4">
             {% if not has_sources %}
                 <a href="{% url 'company:add_company' %}" class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 whitespace-nowrap">
                     + Add Company
@@ -59,41 +64,31 @@
 
 
 {% block extrajs %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Flatpickr -->
+<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<!-- Tom Select -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 
 <script>
-    $(document).ready(function () {
-        // Tagged Companies: multi-select
-        $('#id_tagged_companies').select2({
-            placeholder: "Search and select tagged companies...",
-            multiple: true,
-            ajax: {
-                url: "{% url 'company:search_companies' %}",
-                dataType: 'json',
-                delay: 250,
-                data: function (params) {
-                    return { q: params.term };
-                },
-                processResults: function (data) {
-                    return {
-                        results: data.results
-                    };
-                },
-                cache: true
-            }
+    document.addEventListener("DOMContentLoaded", function () {
+        // Date picker
+        flatpickr("#id_published_date", {
+            dateFormat: "Y-m-d",
+            allowInput: true,
         });
 
-        // Prefill tagged companies only if updating
-        {% if is_update %}
-            var preselectedTaggedCompanies = {{ tagged_companies_data|safe }};
-            preselectedTaggedCompanies.forEach(function(company) {
-                var option = new Option(company.text, company.id, true, true);
-                $('#id_tagged_companies').append(option).trigger('change');
-            });
-        {% endif %}
+        // Tom Select for tagged companies
+        new TomSelect("#tagged-companies", {
+            plugins: ['remove_button'],
+            maxOptions: 500,
+            create: false,
+            persist: false,
+            hideSelected: true,
+            placeholder: 'Search and select companies...'
+        });
     });
 </script>
-
 {% endblock %}
