@@ -9,52 +9,70 @@
         <tr>
             <th class="border px-4 py-2 text-left">Name</th>
             <th class="border px-4 py-2 text-left">URL</th>
-            <th class="border px-4 py-2 text-left">Company</th>
             <th class="border px-4 py-2 text-left">Tagged Companies</th>
             <th class="border px-4 py-2 text-left">Actions</th>
         </tr>
     </thead>
     <tbody>
-        {% for source in page_obj %}
-        <tr class="hover:bg-gray-50">
-            <td class="border px-4 py-2">{{ source.name }}</td>
-            <td class="border px-4 py-2">
-                <a href="{{ source.url }}" target="_blank" class="text-blue-600 hover:text-blue-800">{{ source.url }}</a>
-            </td>
-            <td class="border px-4 py-2">{{ source.company.name }}</td>
-            <td class="border px-4 py-2">
-                {{ source.tagged_companies.all|join:", " }}
-            </td>
-            <td class="border px-4 py-2">
-                <div class="flex space-x-4">
-                    <a href="{% url 'source:update_source' source.pk %}" class="text-blue-600 hover:text-blue-800">Edit</a>
-                    <form action="{% url 'source:delete_source' source.pk %}" method="post" class="inline">
-                        {% csrf_token %}
-                        <button type="submit" class="text-red-600 hover:text-red-800" onclick="return confirm('Are you sure you want to delete this source?');">Delete</button>
-                    </form>
-                    <form action="{% url 'source:fetch_rss' %}" method="get" class="inline">
-                        <input type="hidden" name="source_id" value="{{ source.pk }}">
-                        <button type="submit" class="text-green-600 hover:text-green-800">Fetch</button>
-                    </form>
-                </div>
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5" class="text-center py-4">No sources found.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
+      {% for source in page_obj %}
+      <tr class="hover:bg-gray-50">
+          <td class="border px-4 py-2">{{ source.name }}</td>
+
+          <td class="border px-4 py-2">
+              <a href="{{ source.url }}" target="_blank" class="text-blue-600 hover:text-blue-800">{{ source.url }}</a>
+          </td>
+
+          <td class="border px-4 py-2">
+              {% if source.tagged_company_names %}
+                  {{ source.tagged_company_names|join:", " }}
+              {% else %}
+                  <span class="text-gray-500">None</span>
+              {% endif %}
+          </td>
+
+          <td class="border px-4 py-2">
+              <div class="flex space-x-4">
+                  <a href="{% url 'source:update_source' source.pk %}" class="text-blue-600 hover:text-blue-800">Edit</a>
+
+                  <form action="{% url 'source:delete_source' source.pk %}" method="post" class="inline">
+                      {% csrf_token %}
+                      <button type="submit" class="text-red-600 hover:text-red-800"
+                              onclick="return confirm('Are you sure you want to delete this source?');">Delete</button>
+                  </form>
+
+                  <form action="{% url 'source:fetch_rss' %}" method="get" class="inline">
+                      <input type="hidden" name="source_id" value="{{ source.pk }}">
+                      <button type="submit" class="text-green-600 hover:text-green-800">Fetch</button>
+                  </form>
+              </div>
+          </td>
+      </tr>
+      {% empty %}
+      <tr>
+          <td colspan="5" class="text-center py-4">No sources found.</td>
+      </tr>
+      {% endfor %}
+  </tbody>
+
 </table>
 
 <!-- Pagination Controls -->
-<div class="flex justify-center space-x-4 mt-4 items-center">
-    {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Prev</a>
+<div class="flex justify-center items-center gap-3 mt-6">
+    {% if has_prev %}
+        <a href="?q={{ query }}&page={{ page_number|add:"-1" }}"
+           class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Prev</a>
+    {% else %}
+        <span class="px-4 py-2 bg-gray-100 rounded text-gray-400 cursor-not-allowed">Prev</span>
     {% endif %}
-    <span class="px-4 py-2 font-medium text-gray-700">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Next</a>
+
+    <span class="text-sm">Page {{ page_number }}</span>
+
+    {% if has_next %}
+        <a href="?q={{ query }}&page={{ page_number|add:"1" }}"
+           class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Next</a>
+    {% else %}
+        <span class="px-4 py-2 bg-gray-100 rounded text-gray-400 cursor-not-allowed">Next</span>
     {% endif %}
 </div>
+
 {% endblock %}

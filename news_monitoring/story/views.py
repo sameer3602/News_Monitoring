@@ -1,9 +1,10 @@
 from django.contrib import messages
-from django.core.paginator import Paginator
-from django.db.models import Q, Prefetch
+from django.db import connection
+from django.db.models import Q, TextField
+from django.db.models.aggregates import Aggregate
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from .models import Story, Source, Company
+from .models import Story, Company
 from news_monitoring.forms.storyForm import StoryForm
 
 @login_required
@@ -13,22 +14,18 @@ def add_or_update_story(request, pk=None):
     tagged_companies_data = []
     initial = {}
 
+    # Efficient fetch for update scenario
     if is_update:
-        story = Story.objects.select_related('source').prefetch_related('tagged_companies').get(pk=pk)
-        source = story.source
+        story = Story.objects.prefetch_related('tagged_companies').get(pk=pk)
+        # Only fetch necessary data for pre-filling
         initial = {
             'title': story.title,
             'url': story.url,
             'published_date': story.published_date,
             'body_text': story.body_text,
-            'tagged_companies': story.tagged_companies.all(),  # ✅ Prefill form field
+            'tagged_companies': story.tagged_companies.values_list('id', flat=True),  # Use only IDs for pre-filling
         }
-        tagged_companies_data = [
-            {'id': str(company.id), 'name': company.name}
-            for company in story.tagged_companies.all()
-        ]
-    else:
-        source = None
+        tagged_companies_data = [{'id': str(company.id), 'name': company.name} for company in story.tagged_companies.all()]
 
     if request.method == 'POST':
         title = request.POST.get('title')
@@ -37,11 +34,15 @@ def add_or_update_story(request, pk=None):
         body_text = request.POST.get('body_text')
         tagged_company_ids = request.POST.getlist('tagged_companies')
 
-        # Efficient bulk fetch of tagged companies
+        # Efficiently handle tagged companies using in_bulk
         company_ids = [int(cid) for cid in tagged_company_ids if cid.isdigit()]
-        companies_dict = Company.objects.in_bulk(company_ids)
-        tagged_companies = [companies_dict[cid] for cid in company_ids if cid in companies_dict]
+        if company_ids:
+            companies_dict = Company.objects.in_bulk(company_ids)
+            tagged_companies = [companies_dict[cid] for cid in company_ids if cid in companies_dict]
+        else:
+            tagged_companies = []
 
+        # Update or create story
         if is_update:
             story.title = title
             story.url = url
@@ -56,22 +57,22 @@ def add_or_update_story(request, pk=None):
                 url=url,
                 published_date=published_date,
                 body_text=body_text,
-                source=source,
                 created_by=request.user,
             )
             story.tagged_companies.set(tagged_companies)
 
         return redirect('story:view_stories')
 
+    # For form, don't reload all companies unnecessarily
     form = StoryForm(initial=initial)
-    form.fields['tagged_companies'].queryset = Company.objects.all()  # one query
+    form.fields['tagged_companies'].queryset = Company.objects.all()  # Set queryset for the form
 
     return render(request, 'story/add_or_update_story.html', {
         'form': form,
         'is_update': is_update,
-        'source': source,
         'tagged_companies_data': tagged_companies_data,
     })
+
 
 # @login_required
 # def add_or_update_story(request, pk=None):
@@ -144,84 +145,6 @@ def add_or_update_story(request, pk=None):
 #         'tagged_companies_data': tagged_companies_data,
 #     })
 
-
-# @login_required
-# def add_or_update_story(request, pk=None):
-#     is_update = pk is not None
-#     story = None
-#     source = None
-#     tagged_companies_data = []
-#     company = getattr(request.user, 'company', None)
-#
-#     if is_update:
-#         # Only allow update if the user created the story or is staff
-#         story = get_object_or_404(Story.objects.select_related('source').prefetch_related('tagged_companies'), pk=pk)
-#         if not (request.user == story.created_by or request.user.is_staff):
-#             messages.error(request, "You are not authorized to edit this story.")
-#             return redirect('story:view_stories')
-#         source = story.source  # could be None
-#     else:
-#         source = Source.objects.filter(company=company).first() if company else None
-#
-#     if request.method == 'POST':
-#         title = request.POST.get('title')
-#         url = request.POST.get('url')
-#         published_date = request.POST.get('published_date')
-#         body_text = request.POST.get('body_text')
-#         tagged_company_ids = request.POST.getlist('tagged_companies')
-#
-#         # Get companies in bulk
-#         all_company_ids = list(set([company.id] if company else [] + [int(cid) for cid in tagged_company_ids if cid.isdigit()]))
-#         companies_dict = Company.objects.in_bulk(all_company_ids)
-#         tagged_companies = [companies_dict[cid] for cid in all_company_ids if cid in companies_dict]
-#
-#         if is_update:
-#             story.title = title
-#             story.url = url
-#             story.published_date = published_date
-#             story.body_text = body_text
-#             story.updated_by = request.user
-#             story.save()
-#             story.tagged_companies.set(tagged_companies)
-#         else:
-#             story = Story.objects.create(
-#                 title=title,
-#                 url=url,
-#                 published_date=published_date,
-#                 body_text=body_text,
-#                 source=source,  # may be None
-#                 created_by=request.user,
-#             )
-#             story.tagged_companies.set(tagged_companies)
-#
-#         return redirect('story:view_stories')
-#
-#     else:
-#         initial = {}
-#         if is_update:
-#             initial = {
-#                 'title': story.title,
-#                 'url': story.url,
-#                 'published_date': story.published_date,
-#                 'body_text': story.body_text,
-#             }
-#             tagged_companies_data = [
-#                 {'id': str(company.id), 'name': company.name}
-#                 for company in story.tagged_companies.all()
-#             ]
-#
-#         form = StoryForm(initial=initial, company=company)
-#         form.fields['tagged_companies'].queryset = Company.objects.all()
-#
-#     return render(request, 'story/add_or_update_story.html', {
-#         'form': form,
-#         'is_update': is_update,
-#         'source': source,
-#         'tagged_companies_data': tagged_companies_data,
-#     })
-#
-
-
 @login_required
 def delete_story(request, pk):
     story = get_object_or_404(Story, pk=pk)
@@ -236,48 +159,104 @@ def delete_story(request, pk):
     return redirect('story:view_stories')
 
 
+# @login_required
+# def view_stories(request):
+#     query = request.GET.get('q', '')
+#     page_number = int(request.GET.get('page', 1))
+#
+#     user = request.user
+#     company_id = getattr(user, 'company_id', None)
+#
+#     # Base queryset
+#     stories = Story.objects.select_related('source').prefetch_related(
+#             Prefetch('tagged_companies', queryset=Company.objects.only('id', 'name')))
+#
+#     # Access Control
+#     if user.is_staff:
+#         pass  # show all stories
+#     elif company_id:
+#         stories = stories.filter(tagged_companies__id=company_id)
+#     else:
+#         stories = stories.filter(created_by=user)
+#
+#     # Search Filter
+#     if query:
+#         stories = stories.filter(
+#             Q(title__icontains=query) |
+#             Q(body_text__icontains=query)
+#         )
+#
+#     # Ordering
+#     stories = stories.order_by('-published_date')
+#
+#     # Pagination
+#     paginator = Paginator(stories, 5)
+#     page_obj = paginator.get_page(page_number)
+#
+#     return render(request, 'story/view_stories.html', {
+#         'stories': page_obj,
+#         'page_number': page_number,
+#         'total_pages': paginator.num_pages,
+#         'query': query,
+#     })
+
+# Custom StringAgg class
+class StringAgg(Aggregate):
+    function = 'STRING_AGG'
+    template = "%(function)s(%(expressions)s, ', ')"
+    output_field = TextField()
+
+
 @login_required
 def view_stories(request):
     query = request.GET.get('q', '')
-    page_number = int(request.GET.get('page', 1))
+    page_number = max(int(request.GET.get('page', 1)), 1)
+    per_page = 8
 
     user = request.user
     company_id = getattr(user, 'company_id', None)
 
-    # Base queryset
-    stories = Story.objects.select_related('source') \
-        .prefetch_related(
-            Prefetch('tagged_companies', queryset=Company.objects.only('id', 'name')),
+    stories = Story.objects.select_related('source')
+
+    if connection.vendor == 'postgresql':
+        stories = stories.annotate(
+            tagged_company_names=StringAgg('tagged_companies__name')
         )
 
-    # Access Control
     if user.is_staff:
-        pass  # show all stories
+        pass
     elif company_id:
         stories = stories.filter(tagged_companies__id=company_id)
     else:
-        stories = stories.filter(source__created_by=user)
+        stories = stories.filter(created_by=user)
 
-    # Search Filter
     if query:
         stories = stories.filter(
             Q(title__icontains=query) |
             Q(body_text__icontains=query)
         )
 
-    # Ordering
     stories = stories.order_by('-published_date')
 
-    # Pagination
-    paginator = Paginator(stories, 5)
-    page_obj = paginator.get_page(page_number)
+    # Manual pagination without .count()
+    start = (page_number - 1) * per_page
+    end = start + per_page
+    story_list = list(stories[start:end+1])
+
+    has_next = len(story_list) > per_page
+    has_prev = page_number > 1
+    page_obj = story_list[:per_page]
+
+    # print(page_number,per_page,has_prev,has_next)
 
     return render(request, 'story/view_stories.html', {
         'stories': page_obj,
         'page_number': page_number,
-        'total_pages': paginator.num_pages,
+        'has_next': has_next,
+        'has_prev': has_prev,
         'query': query,
     })
+
 
 # @login_required
 # def view_stories(request):

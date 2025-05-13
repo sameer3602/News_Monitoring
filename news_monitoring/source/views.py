@@ -1,5 +1,7 @@
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.contrib import messages
 from django.db.models import Q
-from django.http import JsonResponse
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -11,12 +13,13 @@ from news_monitoring.story.models import Story
 import feedparser
 from django.core.paginator import Paginator
 
+
 @login_required
 def add_or_update_source(request, pk=None):
     is_update = pk is not None
     source = get_object_or_404(Source, pk=pk) if is_update else None
 
-    # Fetch company only once
+    # Fetch company once
     company_id = getattr(request.user, 'company_id', None)
     if not company_id:
         messages.error(request, "Your account is not associated with any company.")
@@ -26,12 +29,12 @@ def add_or_update_source(request, pk=None):
         form = SourceForm(request.POST, instance=source)
         if form.is_valid():
             source_obj = form.save(commit=False)
-            source_obj.company_id = company_id  # Avoids fetching company object
+            source_obj.company_id = company_id  # Avoid fetching company object again
             if not is_update:
                 source_obj.created_by = request.user
             source_obj.updated_by = request.user
-            source_obj.save()
-            form.save_m2m()
+            source_obj.save()  # Save source object to database
+            form.save_m2m()  # Save many-to-many relationships (tagged_companies)
             messages.success(request, f"Source {'updated' if is_update else 'added'} successfully.")
             return redirect('source:view_sources')
     else:
@@ -41,8 +44,7 @@ def add_or_update_source(request, pk=None):
         'form': form,
         'is_update': is_update,
     })
-
-# @login_required
+# @login_required      #USED JQUERY TO INSERT DATA
 # def add_or_update_source(request, pk=None):
 #     is_update = pk is not None
 #     source = get_object_or_404(Source, pk=pk) if is_update else None
@@ -92,25 +94,65 @@ def add_or_update_source(request, pk=None):
 #     })
 
 
+# @login_required
+# def view_sources(request):
+#     user = request.user
+#     if user.is_staff:
+#         sources = Source.objects.select_related('company').prefetch_related('tagged_companies').all()
+#     else:
+#         # company = getattr(user, 'company', None)
+#         sources = Source.objects.select_related('company').prefetch_related('tagged_companies').filter(
+#             Q(created_by=user)
+#         ).distinct()
+#
+#     paginator = Paginator(sources, 5)
+#     page_number = request.GET.get('page')
+#     page_obj = paginator.get_page(page_number)
+#
+#     return render(request, 'source/view_sources.html', {
+#         'page_obj': page_obj,
+#     })
+
 @login_required
 def view_sources(request):
     user = request.user
-    if user.is_staff:
-        sources = Source.objects.select_related('company').prefetch_related('tagged_companies').all()
-    else:
-        company = getattr(user, 'company', None)
-        sources = Source.objects.select_related('company').prefetch_related('tagged_companies').filter(
-            Q(created_by=user) | Q(company=company)
-        ).distinct()
+    query = request.GET.get('q', '')
+    page_number = int(request.GET.get('page', 1))
+    page_size = 5
+    offset = (page_number - 1) * page_size
+    limit = offset + page_size + 1  # fetch 1 extra to check for next page
 
-    paginator = Paginator(sources, 5)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    # Base queryset
+    sources = Source.objects.select_related('company') \
+        .annotate(
+            tagged_company_ids=ArrayAgg('tagged_companies__id', distinct=True),
+            tagged_company_names=ArrayAgg('tagged_companies__name', distinct=True)
+        )
 
-    return render(request, 'source/view_sources.html', {
+    # Access control
+    if not user.is_staff:
+        sources = sources.filter(created_by=user)
+
+    # Optional search
+    if query:
+        sources = sources.filter(
+            Q(name__icontains=query) |
+            Q(url__icontains=query)
+        )
+
+    sources = sources.order_by('name')[offset:limit]
+    has_next = len(sources) > page_size
+    page_obj = sources[:page_size]
+
+    context = {
         'page_obj': page_obj,
-    })
+        'page_number': page_number,
+        'has_next': has_next,
+        'has_prev': page_number > 1,
+        'query': query,
+    }
 
+    return render(request, 'source/view_sources.html', context)
 
 @login_required
 @require_POST
@@ -126,90 +168,64 @@ def delete_source(request, pk):
     return redirect('source:view_sources')
 
 
-# @login_required
-# def get_sources(request):
-#     sources = Source.objects.select_related('company').prefetch_related('tagged_companies')
-#
-#     if not request.user.is_staff:
-#         sources = sources.filter(created_by=request.user)
-#
-#     paginator = Paginator(sources.order_by('name'), 3)  # Paginate with 10 per page
-#     page_number = request.GET.get('page') or 1
-#     page_obj = paginator.get_page(page_number)
-#
-#     source_list = []
-#     for source in page_obj.object_list:
-#         source_list.append({
-#             "pk": source.pk,
-#             "name": source.name,
-#             "url": source.url,
-#             "company": {
-#                 "name": source.company.name
-#             },
-#             "tagged_companies": [company.name for company in source.tagged_companies.all()]
-#         })
-#
-#     return JsonResponse({
-#         "sources": source_list,
-#         "has_previous": page_obj.has_previous(),
-#         "has_next": page_obj.has_next(),
-#         "page_number": page_obj.number,
-#         "total_pages": paginator.num_pages
-#     })
-#
-
-from django.shortcuts import redirect
-from django.contrib import messages
-from django.utils import timezone
-
 @csrf_exempt
 @login_required
 def fetch_rss(request):
-    if request.method == 'GET':
-        try:
-            source_id = request.GET.get('source_id')
-            if not source_id or not source_id.isdigit():
-                messages.error(request, "Invalid source ID.")
-                return redirect('story:view_stories')
+    if request.method != 'GET':
+        messages.error(request, "Invalid request method.")
+        return redirect('story:view_stories')
 
-            source = Source.objects.get(pk=source_id)
+    source_id = request.GET.get('source_id')
+    if not source_id or not source_id.isdigit():
+        messages.error(request, "Invalid source ID.")
+        return redirect('story:view_stories')
 
-            rss_url = source.url
-            feed = feedparser.parse(rss_url)
+    source = get_object_or_404(Source.objects.prefetch_related('tagged_companies', 'company'), pk=int(source_id))
 
-            if not feed.entries:
-                messages.info(request, "No stories found in the RSS feed.")
-                return redirect('story:view_stories')
+    feed = feedparser.parse(source.url)
+    entries = feed.entries
 
-            for entry in feed.entries:
-                story, created = Story.objects.get_or_create(
-                    title=entry.get('title', ''),
-                    url=entry.get('link', ''),
-                    source=source,
-                    defaults={
-                        'published_date': (
-                            entry.get('published_parsed') and
-                            timezone.datetime(*entry.published_parsed[:6]) or
-                            timezone.now()
-                        ),
-                        'body_text': entry.get('summary', '')[:1000],
-                    }
-                )
-                # Tag the story to the source's company if needed
-                if created and source.company:
-                    story.tagged_companies.add(source.company)
+    if not entries:
+        messages.info(request, "No stories found in the RSS feed.")
+        return redirect('story:view_stories')
 
-            messages.success(request, "Stories fetched and saved successfully.")
-            return redirect('story:view_stories')
+    tagged_companies = list(source.tagged_companies.all())  # Get all tagged companies of the source
+    if source.company and source.company not in tagged_companies:
+        tagged_companies.append(source.company)
+    new_stories = 0
 
-        except Source.DoesNotExist:
-            messages.error(request, "Source not found.")
-            return redirect('story:view_stories')
+    for entry in entries:
+        title = entry.get('title', '').strip()
+        url = entry.get('link', '').strip()
 
-        except Exception as e:
-            print("RSS Fetch Error:", e)
-            messages.error(request, f"Error fetching stories: {str(e)}")
-            return redirect('story:view_stories')
+        if not title or not url:
+            continue
 
-    messages.error(request, "Invalid request method.")
+        published_parsed = entry.get('published_parsed')
+        published_date = (
+            timezone.datetime(*published_parsed[:6]) if published_parsed
+            else timezone.now()
+        )
+
+        body_text = entry.get('summary', '')[:1000]
+
+        story, created = Story.objects.get_or_create(
+            title=title,
+            url=url,
+            source=source,
+            defaults={
+                'published_date': published_date,
+                'body_text': body_text,
+            }
+        )
+
+        if created:
+            story.tagged_companies.set(tagged_companies)
+            new_stories += 1
+
+    if new_stories:
+        messages.success(request, f"{new_stories} new stor{'y' if new_stories == 1 else 'ies'} added.")
+    else:
+        messages.info(request, "No new stories were added.")
+
     return redirect('story:view_stories')

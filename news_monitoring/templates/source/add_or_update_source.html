@@ -28,25 +28,23 @@
             {% endif %}
         </div>
 
+        <!-- Tagged Companies -->
         <div class="mb-4">
             <label class="block font-medium">Tagged Companies</label>
-<!--            <input type="text" id="company-search" placeholder="Search companies..." class="w-full border px-3 py-2 rounded mt-1 mb-2" onkeyup="filterCompanies()">-->
-
             {% render_field form.tagged_companies id="tagged-companies" class="w-full border px-3 py-2 rounded" %}
-
-
             {% if form.tagged_companies.errors %}
                 <p class="text-red-500 text-sm">{{ form.tagged_companies.errors.0 }}</p>
             {% endif %}
         </div>
 
-
-
         <!-- Submit Button -->
         <div class="mt-6">
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save Source</button>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                {% if is_update %}Update Source{% else %}Add Source{% endif %}
+            </button>
         </div>
 
+        <!-- Company Add Button (if needed) -->
         <div class="flex justify-end mt-4">
             {% if not has_sources %}
                 <a href="{% url 'company:add_company' %}" class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 whitespace-nowrap">
@@ -62,7 +60,6 @@
 </div>
 {% endblock %}
 
-
 {% block extrajs %}
 <!-- Flatpickr -->
 <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" />
@@ -74,13 +71,13 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Date picker
+        // Initialize date picker
         flatpickr("#id_published_date", {
             dateFormat: "Y-m-d",
             allowInput: true,
         });
 
-        // Tom Select for tagged companies
+        // Initialize Tom Select for tagged companies
         new TomSelect("#tagged-companies", {
             plugins: ['remove_button'],
             maxOptions: 500,

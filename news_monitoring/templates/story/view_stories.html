@@ -51,13 +51,13 @@
                     </p>
                     <p class="text-sm text-gray-700">
                         <strong>Tagged Companies:</strong>
-                        {% for company in story.tagged_companies.all %}
-                            <span class="inline-block bg-gray-200 px-2 py-1 rounded mr-1 text-sm">
-                                {{ company.name }}
-                            </span>
-                        {% empty %}
-                            <span>No companies tagged.</span>
-                        {% endfor %}
+                        <td class="inline-block bg-gray-200 px-2 py-1 rounded mr-1 text-sm">
+                          {% if story.tagged_company_names %}
+                              {{ story.tagged_company_names }}
+                          {% else %}
+                              {{ story.tagged_companies.all|join:", " }}
+                          {% endif %}
+                    </td>
                     </p>
                     <div class="mt-3 flex space-x-2">
                         <a href="{% url 'story:update_story' story.pk %}" class="text-blue-600 hover:underline">Edit</a>
@@ -74,22 +74,27 @@
     </div>
 
     <!-- Pagination Controls -->
-    {% if total_pages > 1 %}
-    <div class="flex justify-center space-x-4 mt-4">
-        {% if page_number > 1 %}
-            <a href="?q={{ query }}&page={{ page_number|add:"-1" }}" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Prev</a>
+    <div class="flex justify-center items-center gap-x-3 mt-4">
+        {% if has_prev %}
+            <a href="?q={{ query }}&page={{ page_number|add:'-1' }}"
+               class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Prev</a>
         {% else %}
-            <span class="px-4 py-2 bg-gray-200 rounded text-gray-500 cursor-not-allowed">Prev</span>
+            <span class="px-4 py-2 bg-gray-100 rounded text-gray-400 cursor-not-allowed">Prev</span>
         {% endif %}
 
-        <span class="self-center text-sm">Page {{ page_number }} of {{ total_pages }}</span>
+        <span class="text-sm font-medium">Page {{ page_number }}</span>
 
-        {% if page_number < total_pages %}
-            <a href="?q={{ query }}&page={{ page_number|add:"1" }}" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Next</a>
+        {% if has_next %}
+            <a href="?q={{ query }}&page={{ page_number|add:'1' }}"
+               class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Next</a>
         {% else %}
-            <span class="px-4 py-2 bg-gray-200 rounded text-gray-500 cursor-not-allowed">Next</span>
+            <span class="px-4 py-2 bg-gray-100 rounded text-gray-400 cursor-not-allowed">Next</span>
         {% endif %}
     </div>
-    {% endif %}
+
+
 </div>
+
 {% endblock %}
+
+
