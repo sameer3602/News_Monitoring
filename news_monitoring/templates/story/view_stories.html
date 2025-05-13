@@ -1,4 +1,17 @@
 {% extends "base.html" %}
+{% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+            <div class="px-4 py-2 rounded text-white
+                {% if message.tags == 'success' %}bg-green-600
+                {% elif message.tags == 'error' %}bg-red-600
+                {% elif message.tags == 'info' %}bg-blue-600
+                {% else %}bg-gray-600{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 py-6">
@@ -21,7 +34,7 @@
 
     <!-- Story List -->
     <div class="space-y-6">
-        {% if stories %}
+        {% if stories %}</div>
             {% for story in stories %}
                 <div class="border p-4 rounded shadow hover:shadow-md transition">
                     <h2 class="text-xl font-bold">

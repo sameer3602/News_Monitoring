@@ -47,11 +47,14 @@
         </div>
 
         <!-- Source Field (Read-only) -->
+        {% if is_update %}
+        <!-- Source Field (Read-only) shown only during update -->
         <div class="mb-4">
             <label for="id_source" class="block font-medium">Source</label>
-            <input type="text" id="id_source" class="w-full border px-3 py-2 rounded mt-1 bg-gray-100" value="{{ source|default:"N/A" }}" readonly>
+            <input type="text" id="id_source" class="w-full border px-3 py-2 rounded mt-1 bg-gray-100" value="{{ source }}" readonly>
             <input type="hidden" name="source" value="{{ source.id }}">
         </div>
+        {% endif %}
 
         <!-- Tagged Companies with Autocomplete -->
         <div class="mb-4">
