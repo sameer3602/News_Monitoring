@@ -5,44 +5,81 @@ News Monitoring app which feeds RSS
 [![Built with Cookiecutter Django](https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter)](https://github.com/cookiecutter/cookiecutter-django/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-## Settings
+# 📰 NewsMonitor
 
-Moved to [settings](https://cookiecutter-django.readthedocs.io/en/latest/1-getting-started/settings.html).
+**NewsMonitor** is a Django-based web application designed to help users monitor and manage news sources and stories tagged to companies. The platform supports user authentication, source and story management, and role-based access control for staff and regular users.
 
-## Basic Commands
+---
 
-### Setting Up Your Users
+## 🚀 Features
 
-- To create a **normal user account**, just go to Sign Up and fill out the form. Once you submit it, you'll see a "Verify Your E-mail Address" page. Go to your console to see a simulated email verification message. Copy the link into your browser. Now the user's email should be verified and ready to go.
+- 🔐 **Authentication**: User login, logout, and role-based redirection.
+- 🏢 **Company Management**: Every user is associated with a company.
+- 📡 **Source Management**:
+  - Add, edit, delete sources.
+  - Each source includes name, URL, and tagged companies.
+  - Staff users can view all sources; regular users see only theirs.
+- 📚 **Story Management**:
+  - Add, edit, delete stories.
+  - Stories include title, URL, body, published date, and tagged companies.
+  - Staff users can view all stories; regular users see company-relevant ones.
+- 🔍 **Search & Filter**: Keyword search across sources and stories.
+- 🔄 **AJAX Pagination**: Seamless pagination and filtering using AJAX.
+- 📊 **Optimized DB Access**: Uses `select_related`, `prefetch_related`, and `annotate` to reduce queries.
 
-- To create a **superuser account**, use this command:
+---
 
-      $ python manage.py createsuperuser
+## 🧱 Tech Stack
 
-For convenience, you can keep your normal user logged in on Chrome and your superuser logged in on Firefox (or similar), so that you can see how the site behaves for both kinds of users.
+- **Backend**: Django
+- **Frontend**: HTML, TailwindCSS, JavaScript (with AJAX)
+- **Database**: PostgreSQL (recommended)
+- **Forms**: Django Forms + Tom Select for multi-select UI
+- **Auth**: Django's built-in authentication system
 
-### Type checks
+---
 
-Running type checks with mypy:
+## 🔧 Setup Instructions
 
-    $ mypy news_monitoring
+1. Clone the Repository
+bash
+git clone https://github.com/your-username/newsmonitor.git
+cd newsmonitor
+2. Create a Virtual Environment
 
-### Test coverage
+python3 -m venv env
+source env/bin/activate
 
-To run the tests, check your test coverage, and generate an HTML coverage report:
+3. Install Dependencies
 
-    $ coverage run -m pytest
-    $ coverage html
-    $ open htmlcov/index.html
+pip install -r requirements.txt
 
-#### Running tests with pytest
+4. Configure Database
 
-    $ pytest
+Update settings.py to connect to your PostgreSQL database or use SQLite for development.
 
-### Live reloading and Sass CSS compilation
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'your_db_name',
+        'USER': 'your_db_user',
+        'PASSWORD': 'your_password',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
 
-Moved to [Live reloading and SASS compilation](https://cookiecutter-django.readthedocs.io/en/latest/2-local-development/developing-locally.html#using-webpack-or-gulp).
+ ### Project Structure
 
-## Deployment
+newsmonitor/
+├── company/           # Company-related views and models
+├── source/            # Source CRUD logic
+├── story/             # Story management
+├── templates/         # HTML templates
+├── static/            # Static files (CSS, JS)
+├── newsmonitor/       # Django settings and URLs
+└── manage.py
 
-The following details how to deploy this application.
+
+
+
