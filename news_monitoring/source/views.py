@@ -1,49 +1,76 @@
+import feedparser
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+
+from news_monitoring.company.models import Company
 from news_monitoring.forms.sourceForm import SourceForm
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from news_monitoring.source.models import Source
 from news_monitoring.story.models import Story
-import feedparser
-from django.core.paginator import Paginator
 
 
 @login_required
 def add_or_update_source(request, pk=None):
     is_update = pk is not None
-    source = get_object_or_404(Source, pk=pk) if is_update else None
+    source = None
 
-    # Fetch company once
-    company_id = getattr(request.user, 'company_id', None)
-    if not company_id:
+    # Determine if this is an update and it's a GET request
+    if is_update and request.method == 'GET':
+        source = Source.objects.filter(pk=pk) \
+            .select_related('company') \
+            .annotate(
+                tagged_company_ids=ArrayAgg('tagged_companies__id', distinct=True),
+                tagged_company_names=ArrayAgg('tagged_companies__name', distinct=True)
+            ) \
+            .only('id', 'name', 'url', 'company_id') \
+            .first()
+
+        if not source:
+            messages.error(request, "Source not found.")
+            return redirect('source:view_sources')
+
+    # Ensure user has a company
+    if not request.user.company_id:
         messages.error(request, "Your account is not associated with any company.")
         return redirect('company:add_company')
 
     if request.method == 'POST':
-        form = SourceForm(request.POST, instance=source)
+        # In POST we just need instance for update, no annotation
+        source_instance = Source.objects.get(pk=pk) if is_update else None
+        form = SourceForm(request.POST, instance=source_instance)
+
         if form.is_valid():
             source_obj = form.save(commit=False)
-            source_obj.company_id = company_id  # Avoid fetching company object again
+            source_obj.company_id = request.user.company_id  # Avoid refetching company
             if not is_update:
                 source_obj.created_by = request.user
             source_obj.updated_by = request.user
-            source_obj.save()  # Save source object to database
-            form.save_m2m()  # Save many-to-many relationships (tagged_companies)
+            source_obj.save()
+            form.save_m2m()
             messages.success(request, f"Source {'updated' if is_update else 'added'} successfully.")
             return redirect('source:view_sources')
     else:
-        form = SourceForm(instance=source)
+        if is_update:
+            form = SourceForm(initial={
+                'name': source.name,
+                'url': source.url,
+                'tagged_companies': source.tagged_company_ids,
+            })
+        else:
+            form = SourceForm()
 
     return render(request, 'source/add_or_update_source.html', {
         'form': form,
         'is_update': is_update,
     })
+
+
 # @login_required      #USED JQUERY TO INSERT DATA
 # def add_or_update_source(request, pk=None):
 #     is_update = pk is not None
@@ -135,10 +162,7 @@ def view_sources(request):
 
     # Optional search
     if query:
-        sources = sources.filter(
-            Q(name__icontains=query) |
-            Q(url__icontains=query)
-        )
+        sources = sources.filter( Q(name__icontains=query) | Q(url__icontains=query) )
 
     sources = sources.order_by('name')[offset:limit]
     has_next = len(sources) > page_size
@@ -149,7 +173,7 @@ def view_sources(request):
         'page_number': page_number,
         'has_next': has_next,
         'has_prev': page_number > 1,
-        'query': query,
+        'query': query
     }
 
     return render(request, 'source/view_sources.html', context)

@@ -30,8 +30,8 @@
 
         <!-- Tagged Companies -->
         <div class="mb-4">
-            <label class="block font-medium">Tagged Companies</label>
-            {% render_field form.tagged_companies id="tagged-companies" class="w-full border px-3 py-2 rounded" %}
+            {{ form.tagged_companies.label_tag }}
+            {% render_field form.tagged_companies id="tagged-companies" class="w-full border px-3 py-2 rounded mt-1" %}
             {% if form.tagged_companies.errors %}
                 <p class="text-red-500 text-sm">{{ form.tagged_companies.errors.0 }}</p>
             {% endif %}
@@ -44,14 +44,14 @@
             </button>
         </div>
 
-        <!-- Company Add Button (if needed) -->
-        <div class="flex justify-end mt-4">
-            {% if not has_sources %}
+        <!-- Company Add Button -->
+        {% if not has_sources %}
+            <div class="flex justify-end mt-4">
                 <a href="{% url 'company:add_company' %}" class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 whitespace-nowrap">
                     + Add Company
                 </a>
-            {% endif %}
-        </div>
+            </div>
+        {% endif %}
 
         {% if form.company.errors %}
             <p class="text-red-500 text-sm mt-1">{{ form.company.errors.0 }}</p>
@@ -71,12 +71,6 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Initialize date picker
-        flatpickr("#id_published_date", {
-            dateFormat: "Y-m-d",
-            allowInput: true,
-        });
-
         // Initialize Tom Select for tagged companies
         new TomSelect("#tagged-companies", {
             plugins: ['remove_button'],
@@ -86,6 +80,14 @@
             hideSelected: true,
             placeholder: 'Search and select companies...'
         });
+
+        // (Optional) Flatpickr init for published date (only if used in the form)
+        if (document.querySelector("#id_published_date")) {
+            flatpickr("#id_published_date", {
+                dateFormat: "Y-m-d",
+                allowInput: true,
+            });
+        }
     });
 </script>
 {% endblock %}
