@@ -71,14 +71,14 @@ DATABASES = {
 
  ### Project Structure
 
-newsmonitor/
-├── company/           # Company-related views and models
-├── source/            # Source CRUD logic
-├── story/             # Story management
-├── templates/         # HTML templates
-├── static/            # Static files (CSS, JS)
-├── newsmonitor/       # Django settings and URLs
-└── manage.py
+  ### newsmonitor/
+  ├── company/           # Company-related views and models
+  ├── source/            # Source CRUD logic
+  ├── story/             # Story management
+  ├── templates/         # HTML templates
+  ├── static/            # Static files (CSS, JS)
+  ├── newsmonitor/       # Django settings and URLs
+  └── manage.py
 
 
 
