@@ -7,7 +7,7 @@ News Monitoring app which feeds RSS
 
 # 📰 NewsMonitor
 
-**NewsMonitor** is a Django-based web application designed to help users monitor and manage news sources and stories tagged to companies. The platform supports user authentication, source and story management, and role-based access control for staff and regular users.
+**NewsMonitor** is a Django-based web application designed to help users monitor and manage news sources and stories tagged to companies. The platform supports user authentication, source and story management, and role-based access control for staff and regular users. ### It is fully optimized and uses single SQL Query for all every function (add story,update story,add source,update source).
 
 ---
 
