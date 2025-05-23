@@ -322,6 +322,5 @@ tags
 dump.rdb
 
 ### Project template
-news_monitoring/media/
 
 .pytest_cache/
