@@ -1,7 +1,7 @@
 from django.db import models
 from news_monitoring.source.models import Source
 from news_monitoring.company.models import Company
-from  news_monitoring.users.models import User
+from news_monitoring.users.models import User
 
 
 class Story(models.Model):

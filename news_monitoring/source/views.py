@@ -253,3 +253,8 @@ def fetch_rss(request):
         messages.info(request, "No new stories were added.")
 
     return redirect('story:view_stories')
+
+
+@login_required
+def source_angular_view(request):
+    return render(request, 'source/source_base.html')

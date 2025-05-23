@@ -2,8 +2,8 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 
-from news_monitoring.company.models import Company
-from news_monitoring.forms.companyForm import CompanyForm
+from ..company.models import Company
+from ..forms.companyForm import CompanyForm
 
 @login_required
 def add_company(request):
@@ -27,3 +27,13 @@ def search_companies(request):
     companies = Company.objects.filter(name__icontains=term)[:10]
     results = [{'id': c.id, 'text': c.name} for c in companies]
     return JsonResponse({'results': results})
+
+# from rest_framework import viewsets
+# from .models import Company
+# from .serializers import CompanySerializer
+# from rest_framework.permissions import IsAuthenticated  # optional
+#
+# class CompanyViewSet(viewsets.ModelViewSet):
+#     queryset = Company.objects.all()
+#     serializer_class = CompanySerializer
+#     permission_classes = [IsAuthenticated]  # remove this if you want open access

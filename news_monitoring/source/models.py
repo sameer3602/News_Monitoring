@@ -1,6 +1,6 @@
 from django.db import models
-from news_monitoring.company.models import Company
 from news_monitoring.users.models import User
+from news_monitoring.company.models import Company
 
 class Source(models.Model):
     name = models.CharField(max_length=255)

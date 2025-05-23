@@ -1,0 +1,18 @@
+{% extends "base_api.html" %}
+
+{% block title %}Sources - News Monitor{% endblock %}
+
+{% block content %}
+  <div id="app-root">
+    <app-root></app-root>
+  </div>
+{% endblock %}
+
+{% block extrajs %}
+  <script src="{{ MEDIA_URL }}temp-source/dist/temp-source/browser/polyfills.js" type="module"></script>
+  <link rel="stylesheet" href="{{ MEDIA_URL }}temp-source/dist/temp-source/browser/styles.css"></head>
+
+  <script src="{{ MEDIA_URL }}temp-source/dist/temp-source/browser/main.js" type="module"></script></body>
+{% endblock %}
+
+
