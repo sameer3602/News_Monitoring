@@ -1,0 +1,17 @@
+{% extends "base_api.html" %}
+
+{% block title %}Story Management{% endblock %}
+
+{% block content %}
+  <!-- Header and Footer handled by base.html -->
+
+  <!-- Angular story app mount point -->
+  <div id="story-app">
+    <app-root></app-root>
+  </div>
+
+  <!-- Angular bundle scripts for Story app -->
+  <script src="{{ MEDIA_URL }}story/dist/story/browser/polyfills.js" type="module"></script>
+  <link rel="stylesheet" href="{{ MEDIA_URL }}story/dist/story/browser/styles.css"></head>
+  <script src="{{ MEDIA_URL }}story/dist/story/browser/main.js" type="module"></script></body>
+{% endblock %}

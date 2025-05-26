@@ -11,6 +11,11 @@ BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 APPS_DIR = BASE_DIR / "news_monitoring"
 env = environ.Env()
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:4200",
+]
+
+
 READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
 if READ_DOT_ENV_FILE:
     # OS environment variables take precedence over variables from .env
@@ -261,7 +266,8 @@ EMAIL_TIMEOUT = 5
 
 # Allow media domain during development
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:4200",  # Angular dev server
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
 ]
 
 # ADMIN
@@ -335,6 +341,13 @@ REST_FRAMEWORK = {
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
 CORS_URLS_REGEX = r"^/api/.*$"
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 # By Default swagger ui is available only to admin user(s). You can change permission classes to change that
 # See more configuration options at https://drf-spectacular.readthedocs.io/en/latest/settings.html#settings

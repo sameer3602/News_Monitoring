@@ -187,3 +187,8 @@ def view_stories(request):
 #         'total_pages': paginator.num_pages,
 #         'query': query,
 #     })
+
+
+@login_required
+def story_angular_view(request):
+    return render(request, 'story/story_base.html')

@@ -20,9 +20,9 @@ def login_view(request):
                 # Check if user has any sources
                 has_sources = Source.objects.filter(created_by=user).exists()
                 if has_sources:
-                    return redirect('source:view_sources')  # view sources page
+                    return redirect('source:source_angular')  # view sources page
                 else:
-                    return redirect('source:add_source')  # add source page
+                    return redirect('source:source_angular')  # add source page
             else:
                 error = "Invalid username or password"
     else:

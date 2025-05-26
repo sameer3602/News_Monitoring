@@ -12,13 +12,14 @@ from rest_framework.authtoken.views import obtain_auth_token
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
     path('api/v1/', include('news_monitoring.source.api.api_urls', namespace="sources")),
+    path('api/v1/', include('news_monitoring.story.api.api_urls',namespace="stories")),
     # # path('api/', include('story.urls')),
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
     path("", include("news_monitoring.users.urls",namespace="users")),
     # path("accounts/", include("allauth.urls")),
-    path("stories/", include("news_monitoring.story.urls",namespace="story")),
+    path("story/", include("news_monitoring.story.urls",namespace="story")),
     path("sources/", include("news_monitoring.source.urls",namespace="source")),
     path("companies/", include("news_monitoring.company.urls")),
     # Your stuff: custom urls includes go here
