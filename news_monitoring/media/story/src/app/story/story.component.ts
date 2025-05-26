@@ -731,7 +731,6 @@ export class StoryComponent implements OnInit {
   private isStoryValid(story: Partial<Story>): boolean {
     return (
       !!story.title &&
-      !!story.source &&
       !!story.published_date &&
       !!story.body_text &&
       !!story.url &&

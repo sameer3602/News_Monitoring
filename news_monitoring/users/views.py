@@ -4,9 +4,10 @@ from django.contrib.auth import get_user_model
 from news_monitoring.forms.loginForm import LoginForm
 from news_monitoring.forms.signupForm import SignupForm
 from news_monitoring.source.models import Source
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 User = get_user_model()
-
+@ensure_csrf_cookie
 def login_view(request):
     error=None
     if request.method == "POST":
@@ -29,6 +30,8 @@ def login_view(request):
         form = LoginForm()
     return render(request, "users/login.html", {"form": form,"error":error})
 
+
+@ensure_csrf_cookie
 def signup_view(request):
     if request.method == "POST":
         form = SignupForm(request.POST)
@@ -39,6 +42,7 @@ def signup_view(request):
         form = SignupForm()
     return render(request, "users/signup.html", {"form": form})
 
+@ensure_csrf_cookie
 def logout_view(request):
     logout(request)
     return redirect("home")

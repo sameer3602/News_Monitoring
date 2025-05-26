@@ -188,7 +188,9 @@ def view_stories(request):
 #         'query': query,
 #     })
 
+from django.views.decorators.csrf import ensure_csrf_cookie
 
+@ensure_csrf_cookie
 @login_required
 def story_angular_view(request):
     return render(request, 'story/story_base.html')

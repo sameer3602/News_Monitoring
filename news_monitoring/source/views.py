@@ -255,6 +255,9 @@ def fetch_rss(request):
     return redirect('story:view_stories')
 
 
+from django.views.decorators.csrf import ensure_csrf_cookie
+
+@ensure_csrf_cookie
 @login_required
 def source_angular_view(request):
     return render(request, 'source/source_base.html')

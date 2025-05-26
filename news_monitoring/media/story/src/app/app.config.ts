@@ -1,15 +1,31 @@
+// import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+// import { provideRouter } from '@angular/router';
+// import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptors, withInterceptorsFromDi } from '@angular/common/http'; 
+// import { routes } from './app.routes';
+// import { CsrfInterceptor} from './service/csrf.interceptor';
+
+// export const appConfig: ApplicationConfig = {
+//   providers: [
+//     provideZoneChangeDetection({ eventCoalescing: true }),
+//     provideRouter(routes),
+//     { provide: HTTP_INTERCEPTORS, useClass: CsrfInterceptor, multi: true }
+
+//   ]
+// };
+// app.config.ts
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptors, withInterceptorsFromDi } from '@angular/common/http'; 
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { routes } from './app.routes';
-import { CsrfInterceptor} from './service/csrf.interceptor';
+import { CsrfInterceptor } from './service/csrf.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideHttpClient(
-      withInterceptors([() => new CsrfInterceptor()])
-    )
+      withInterceptorsFromDi()  // ✅ Uses interceptors provided via DI
+    ),
+    CsrfInterceptor  // ✅ Provide it as a service
   ]
 };

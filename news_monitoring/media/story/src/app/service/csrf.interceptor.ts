@@ -1,4 +1,4 @@
-// src/app/interceptors/csrf.interceptor.ts
+// src/app/service/csrf.interceptor.ts
 import { Injectable } from '@angular/core';
 import {
   HttpInterceptor,
@@ -10,7 +10,6 @@ import { Observable } from 'rxjs';
 
 @Injectable()
 export class CsrfInterceptor implements HttpInterceptor {
-
   private getCookie(name: string): string | null {
     const cookies = document.cookie.split(';');
     for (const cookie of cookies) {
