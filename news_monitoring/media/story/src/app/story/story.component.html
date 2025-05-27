@@ -10,6 +10,15 @@
     </button>
   </div>
 
+  <input
+    type="text"
+    placeholder="Search stories..."
+    (input)="onFilterChange($any($event.target).value)"
+    class="border border-gray-300 rounded-md px-4 py-2 mb-4 w-full"
+  />
+
+
+
   <table class="w-full table-auto border-collapse border border-gray-300">
     <thead class="bg-gray-100">
       <tr>
@@ -22,7 +31,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let story of stories" class="hover:bg-gray-50">
+      <tr *ngFor="let story of filteredStories" class="hover:bg-gray-50">
         <td class="border border-gray-300 px-4 py-2">{{ story.title }}</td>
         <td class="border border-gray-300 px-4 py-2">{{ story.source?.name }}</td>
         <td class="border border-gray-300 px-4 py-2">{{ story.published_date | date: 'shortDate' }}</td>
