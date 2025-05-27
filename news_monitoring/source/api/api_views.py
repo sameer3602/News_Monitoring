@@ -25,16 +25,22 @@ class SourceViewSet(viewsets.ModelViewSet):
         # Normal users only see sources they created
         return Source.objects.filter(created_by=user)
 
+
     def perform_create(self, serializer):
+        print("inside perform_create")
+        print("Creating source with data:", serializer.validated_data)
         serializer.save(created_by=self.request.user, updated_by=self.request.user)
+
 
     def perform_update(self, serializer):
         # Ensure user can only update sources they created unless staff
         source = self.get_object()
+        print("Source being updated:", source)
         user = self.request.user
         if not user.is_staff and source.created_by != user:
             raise PermissionDenied("You don't have permission to update this source.")
         serializer.save(updated_by=user)
+
 
     def perform_destroy(self, instance):
         # Ensure user can only delete sources they created unless staff
@@ -42,6 +48,13 @@ class SourceViewSet(viewsets.ModelViewSet):
         if not user.is_staff and instance.created_by != user:
             raise PermissionDenied("You don't have permission to delete this source.")
         instance.delete()
+
+
+class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Company.objects.all()
+    serializer_class = CompanySerializer
+    permission_classes = [IsAuthenticated]
+
 
 @ensure_csrf_cookie
 @api_view(['GET'])
@@ -96,7 +109,4 @@ def fetch_stories(request, source_id):
         "stories": story_data
     }, status=200)
 
-class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Company.objects.all()
-    serializer_class = CompanySerializer
-    permission_classes = [IsAuthenticated]
+

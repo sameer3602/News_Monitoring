@@ -12,4 +12,5 @@ router.register(r'companies', CompanyViewSet, basename='company')
 
 urlpatterns = [
     path('', include(router.urls)),
-    ]
+    
+]

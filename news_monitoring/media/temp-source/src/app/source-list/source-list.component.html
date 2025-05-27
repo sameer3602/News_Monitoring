@@ -209,8 +209,8 @@
         <!-- Input for typing search -->
         <input
           type="text"
-          [(ngModel)]="companySearch"
-          (input)="filterCompanies()"
+          [(ngModel)]="editCompanySearch"
+          (input)="filterEditCompanies()"
           (keydown.enter)="$event.preventDefault()"
           placeholder="Search and add companies..."
           class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -222,7 +222,7 @@
           class="absolute z-50 bg-white border border-gray-300 rounded mt-1 max-h-48 overflow-auto w-full shadow-lg"
         >
           <li
-            *ngFor="let company of filteredCompanies"
+            *ngFor="let company of editFilteredCompanies"
             (click)="addCompany(company)"
             class="px-3 py-2 cursor-pointer hover:bg-blue-100"
           >

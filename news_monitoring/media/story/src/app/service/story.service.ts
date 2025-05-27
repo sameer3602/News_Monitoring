@@ -6,9 +6,21 @@ import { Story } from '../models/story.model';
 import { Company } from '../models/company.model';
 import { Source } from '../models/source.model';
 
+
+export interface StoryCreatePayload {
+  title: string;
+  url: string;
+  published_date: string;
+  body_text: string;
+  source_id: number;
+  tagged_company_ids: number[];
+}
+
+
 @Injectable({
   providedIn: 'root',
 })
+
 export class StoryService {
   private baseUrl = `${environment.apiUrl}stories/`;
   private sourcesUrl = `${environment.apiUrl}sources/`;

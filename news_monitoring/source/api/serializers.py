@@ -8,11 +8,15 @@ class CompanySerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 class SourceSerializer(serializers.ModelSerializer):
-    tagged_companies = CompanySerializer(many=True, read_only=True)
-    tagged_companies_ids = serializers.PrimaryKeyRelatedField(
-        queryset=Company.objects.all(), many=True, write_only=True, source='tagged_companies'
+    # Used for POST/PUT/PATCH
+    tagged_companies = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Company.objects.all(),
+        write_only=True
     )
+    # Used for GET
+    tagged_companies_detail = CompanySerializer(source='tagged_companies', many=True, read_only=True)
 
     class Meta:
         model = Source
-        fields = ['id', 'name', 'url', 'tagged_companies', 'tagged_companies_ids']
+        fields = ['id', 'name', 'url', 'tagged_companies', 'tagged_companies_detail']
