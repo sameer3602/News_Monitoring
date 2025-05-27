@@ -16,6 +16,13 @@
       </tr>
     </thead>
     <tbody>
+       <!-- Spinner row -->
+      <div *ngIf="isLoadingSources" class="fixed inset-0 bg-white bg-opacity-75 flex justify-center items-center z-50">
+        <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+
+
+      <!-- Source rows -->
       <tr *ngFor="let source of sources" class="hover:bg-gray-50">
         <td class="px-4 py-2 border-b border-gray-200 break-words max-w-xs">{{ source.name }}</td>
         <td class="px-4 py-2 border-b border-gray-200 break-all max-w-xs">
@@ -49,22 +56,18 @@
     </tbody>
   </table>
 
-  <div class="mt-4 flex justify-between">
-    <button
-      [disabled]="!hasPrev"
-      (click)="prevPage()"
-      class="px-4 py-2 rounded bg-gray-300 disabled:opacity-50 hover:bg-gray-400 transition"
-    >
+  <div class="flex justify-between items-center mt-4">
+    <button (click)="prevPage()" [disabled]="!hasPrev" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 disabled:opacity-50">
       Previous
     </button>
-    <button
-      [disabled]="!hasNext"
-      (click)="nextPage()"
-      class="px-4 py-2 rounded bg-gray-300 disabled:opacity-50 hover:bg-gray-400 transition"
-    >
+
+    <span>Page {{ page }}</span>
+
+    <button (click)="nextPage()" [disabled]="!hasNext" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 disabled:opacity-50">
       Next
     </button>
   </div>
+
 
   <!-- Modal -->
   <div

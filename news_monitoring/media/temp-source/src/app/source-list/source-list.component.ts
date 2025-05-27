@@ -14,12 +14,11 @@ import { Source, Company, Story } from './source.model';
 export class SourceListComponent implements OnInit {
   sources: Source[] = [];
   companies: Company[] = [];
-
   showModal = false;
   showEditModal = false;
-
   showDeleteModal = false;
   deleteSourceId: number | null = null;
+
 
   newSource: {
     name: string;
@@ -37,6 +36,8 @@ export class SourceListComponent implements OnInit {
   hasPrev = false;
   hasNext = false;
 
+  //spinner options
+  isLoadingSources = false;
   constructor(private sourceService: SourceService) {}
 
   ngOnInit(): void {
@@ -45,15 +46,19 @@ export class SourceListComponent implements OnInit {
   }
 
   loadSources(): void {
-    this.sourceService.getSources().subscribe({
-      next: (data) => {
-        this.sources = data;
-        // handle pagination flags if needed
-      },
-      error: (err) => console.error('Failed to load sources', err),
-    });
-  }
-
+  this.isLoadingSources = true;
+  this.sourceService.getSources().subscribe({
+    next: (data) => {
+      this.sources = data;
+      this.updatePaginatedSources();
+      this.isLoadingSources = false;
+    },
+    error: (err) => {
+      console.error('Failed to load sources', err);
+      this.isLoadingSources = false;
+    },
+  });
+}
   loadCompanies(): void {
     this.sourceService.getCompanies().subscribe({
       next: (data) => (this.companies = data),
@@ -159,27 +164,27 @@ export class SourceListComponent implements OnInit {
     }
 
     // Construct payload for backend (company IDs only)
-    const payload: { name: string; url: string; tagged_companies: number[] } = {
-    name: this.editSource.name,
-    url: this.editSource.url,
-    tagged_companies: this.editSource.tagged_companies.map(c =>
-      typeof c === 'object' ? c.id : c
-    ),
-  };
+      const payload: { name: string; url: string; tagged_companies: number[] } = {
+      name: this.editSource.name,
+      url: this.editSource.url,
+      tagged_companies: this.editSource.tagged_companies.map(c =>
+        typeof c === 'object' ? c.id : c
+      ),
+    };
 
-  this.sourceService.updateSource(this.editSource.id, payload).subscribe({
-    next: (updatedSource) => {
-      const index = this.sources.findIndex((s) => s.id === updatedSource.id);
-      if (index !== -1) {
-        this.sources[index] = updatedSource;
-      }
-      this.closeEditModal();
-    },
-    error: (err) => {
-      console.error('Failed to update source', err);
-      alert('Failed to update source');
-    },
-  });
+    this.sourceService.updateSource(this.editSource.id, payload).subscribe({
+      next: (updatedSource) => {
+        const index = this.sources.findIndex((s) => s.id === updatedSource.id);
+        if (index !== -1) {
+          this.sources[index] = updatedSource;
+        }
+        this.closeEditModal();
+      },
+      error: (err) => {
+        console.error('Failed to update source', err);
+        alert('Failed to update source');
+      },
+    });
 }
 
   openDeleteModal(id: number): void {
@@ -208,21 +213,33 @@ confirmDelete(): void {
 }
 
 
+// pagination logic
+  readonly pageSize = 5;
+
+  updatePaginatedSources(): void {
+    const start = (this.page - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    this.sources = this.sources.slice(start, end);
+    this.hasPrev = this.page > 1;
+    this.hasNext = end < this.sources.length;
+  }
+    nextPage(): void {
+    if (this.hasNext) {
+      this.page++;
+      this.updatePaginatedSources();
+    }
+  }
+
   prevPage(): void {
     if (this.hasPrev) {
       this.page--;
-      this.loadSources();
+      this.updatePaginatedSources();
     }
   }
 
-  nextPage(): void {
-    if (this.hasNext) {
-      this.page++;
-      this.loadSources();
-    }
-  }
 
- companySearch = '';
+// filtered companies for new source modal
+companySearch = '';
 filteredCompanies: Company[] = [];
 
 filterCompanies() {

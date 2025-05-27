@@ -17,9 +17,12 @@ export class StoryComponent implements OnInit {
   filteredStories: Story[] = []; 
   sources: Source[] = [];
   companies: Company[] = [];
-  filterText = signal('');  
 
-  // Optional: method to update filterText from input
+  //Spinner options
+  
+  isLoadingStories = false;
+
+  // method to update filtered stories from input
 
   onFilterChange(query: string): void {
     const lowerQuery = query.toLowerCase();
@@ -103,24 +106,34 @@ export class StoryComponent implements OnInit {
   // ========== Loaders ==========
 
  loadStories(): void {
-  this.storyService.getStories().subscribe({
-    next: (data) => {
-      this.stories = data;
-      this.filteredStories = data; // show full list by default
-      this.page = 1;
-      this.updatePagination();
-    },
-    error: (err) => {
-      console.error('Error loading stories', err);
-    }
+    this.isLoadingStories = true;
+    this.storyService.getStories().subscribe({
+      next: (data) => {
+        this.stories = data;
+        this.filteredStories = data; // show full list by default
+        this.page = 1;
+        this.updatePagination();
+        this.isLoadingStories = false; // Hide spinner after loading
+      },
+      error: (err) => {
+        console.error('Error loading stories', err);
+        this.isLoadingStories = false; // Hide spinner on error
+      }
   });
 }
   loadSources(): void {
     this.storyService.getSources().subscribe({
-      next: (data) => (this.sources = data),
-      error: (err) => console.error('Failed to load sources', err),
-    });
-  }
+      next: (data) => {
+        this.sources = data;
+        
+      },
+      error: (err) => {
+        console.error('Failed to load sources', err);
+        
+      }
+  });
+}
+
 
   loadCompanies(): void {
     this.storyService.getCompanies().subscribe({

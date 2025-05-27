@@ -20,46 +20,55 @@
 
 
   <table class="w-full table-auto border-collapse border border-gray-300">
-    <thead class="bg-gray-100">
-      <tr>
-        <th class="border border-gray-300 px-4 py-2 text-left">Title</th>
-        <th class="border border-gray-300 px-4 py-2 text-left">Source</th>
-        <th class="border border-gray-300 px-4 py-2 text-left">Published Date</th>
-        <th class="border border-gray-300 px-4 py-2 text-left">URL</th>
-        <th class="border border-gray-300 px-4 py-2 text-left">Tagged Companies</th>
-        <th class="border border-gray-300 px-4 py-2 text-left">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let story of filteredStories" class="hover:bg-gray-50">
-        <td class="border border-gray-300 px-4 py-2">{{ story.title }}</td>
-        <td class="border border-gray-300 px-4 py-2">{{ story.source?.name }}</td>
-        <td class="border border-gray-300 px-4 py-2">{{ story.published_date | date: 'shortDate' }}</td>
-        <td class="border border-gray-300 px-4 py-2">
-          <a [href]="story.url" target="_blank" class="text-blue-600 hover:underline">Link</a>
-        </td>
-        <td class="border border-gray-300 px-4 py-2">
-          <span *ngFor="let company of story.tagged_companies; let i = index" class="inline-block">
-            {{ company.name }}<span *ngIf="i < story.tagged_companies.length - 1">, </span>
-          </span>
-        </td>
-        <td class="border border-gray-300 px-4 py-2 space-x-2">
-          <button
-            (click)="fetchStory(story.id)"
-            class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-yellow-300"
-          >
-            Edit
-          </button>
-          <button
-            (click)="openDeleteModal(story.id)"
-            class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-red-400"
-          >
-            Delete
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <thead class="bg-gray-100">
+    <tr>
+      <th class="border border-gray-300 px-4 py-2 text-left">Title</th>
+      <th class="border border-gray-300 px-4 py-2 text-left">Source</th>
+      <th class="border border-gray-300 px-4 py-2 text-left">Published Date</th>
+      <th class="border border-gray-300 px-4 py-2 text-left">URL</th>
+      <th class="border border-gray-300 px-4 py-2 text-left">Tagged Companies</th>
+      <th class="border border-gray-300 px-4 py-2 text-left">Actions</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <!-- Spinner row -->
+    <div *ngIf="isLoadingStories" class="fixed inset-0 bg-white bg-opacity-75 flex justify-center items-center z-50">
+      <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+
+
+    <!-- Story rows -->
+    <tr *ngFor="let story of filteredStories" class="hover:bg-gray-50">
+      <td class="border border-gray-300 px-4 py-2">{{ story.title }}</td>
+      <td class="border border-gray-300 px-4 py-2">{{ story.source?.name }}</td>
+      <td class="border border-gray-300 px-4 py-2">{{ story.published_date | date: 'shortDate' }}</td>
+      <td class="border border-gray-300 px-4 py-2">
+        <a [href]="story.url" target="_blank" class="text-blue-600 hover:underline">Link</a>
+      </td>
+      <td class="border border-gray-300 px-4 py-2">
+        <span *ngFor="let company of story.tagged_companies; let i = index" class="inline-block">
+          {{ company.name }}<span *ngIf="i < story.tagged_companies.length - 1">, </span>
+        </span>
+      </td>
+      <td class="border border-gray-300 px-4 py-2 space-x-2">
+        <button
+          (click)="fetchStory(story.id)"
+          class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-yellow-300"
+        >
+          Edit
+        </button>
+        <button
+          (click)="openDeleteModal(story.id)"
+          class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-red-400"
+        >
+          Delete
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
 </div>
 
 <!-- ADD STORY MODAL -->
