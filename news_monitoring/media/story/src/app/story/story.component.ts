@@ -20,22 +20,26 @@ export class StoryComponent implements OnInit {
   filterText = signal('');  
 
   // Optional: method to update filterText from input
-  searchText: string = '';
 
   onFilterChange(query: string): void {
-  const lowerQuery = query.toLowerCase();
+    const lowerQuery = query.toLowerCase();
 
-  this.filteredStories = this.stories.filter(story =>
-    story.title.toLowerCase().includes(lowerQuery) ||
-    story.body_text.toLowerCase().includes(lowerQuery) ||
-    story.source?.name.toLowerCase().includes(lowerQuery)
-  );
+    const filtered = this.stories.filter(story =>
+      story.title.toLowerCase().includes(lowerQuery) ||
+      story.body_text.toLowerCase().includes(lowerQuery) ||
+      story.source?.name.toLowerCase().includes(lowerQuery)
+    );
+
+    this.page = 1;
+    this.totalPages = Math.ceil(filtered.length / this.pageSize);
+    this.hasPrev = false;
+    this.hasNext = this.totalPages > 1;
+
+    const startIndex = (this.page - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+
+    this.filteredStories = filtered.slice(startIndex, endIndex);
 }
-
-
-  
-
-
 
   // Modal control
   showModal = false;
@@ -48,25 +52,37 @@ export class StoryComponent implements OnInit {
   deleteStoryId: number | null = null;
 
   // Pagination
-   page = 1;
-    totalPages = 1; // This should be set from the API response
+    page = 1;
+    pageSize = 8; // ✅ Show 8 stories per page
+    totalPages = 1;
     hasPrev = false;
     hasNext = false;
 
-    prevPage(): void {
-      if (this.hasPrev) {
-        this.page--;
-        this.loadStories();;
-      }
+    updatePagination(): void {
+      const totalItems = this.stories.length;
+      this.totalPages = Math.ceil(totalItems / this.pageSize);
+      this.hasPrev = this.page > 1;
+      this.hasNext = this.page < this.totalPages;
+
+      const startIndex = (this.page - 1) * this.pageSize;
+      const endIndex = startIndex + this.pageSize;
+
+      this.filteredStories = this.stories.slice(startIndex, endIndex);
     }
 
-    nextPage(): void {
-      if (this.hasNext) {
-        this.page++;
-        this.loadStories();
-      }
+      prevPage(): void {
+        if (this.hasPrev) {
+          this.page--;
+          this.updatePagination();
+        }
     }
 
+      nextPage(): void {
+        if (this.hasNext) {
+          this.page++;
+          this.updatePagination();
+        }
+      }
   
   // Company search (Add form)
   companySearch = '';
@@ -91,6 +107,8 @@ export class StoryComponent implements OnInit {
     next: (data) => {
       this.stories = data;
       this.filteredStories = data; // show full list by default
+      this.page = 1;
+      this.updatePagination();
     },
     error: (err) => {
       console.error('Error loading stories', err);
@@ -177,6 +195,7 @@ export class StoryComponent implements OnInit {
     this.storyService.createStory(this.newStory as Story).subscribe({
       next: (story) => {
         this.stories.push(story);
+         this.updatePagination(); // 👈 Refresh page view
         this.closeModal();
       },
       error: (err) => console.error('Failed to add story', err),
@@ -204,6 +223,7 @@ export class StoryComponent implements OnInit {
       next: (updatedStory) => {
         const index = this.stories.findIndex((s) => s.id === updatedStory.id);
         if (index !== -1) this.stories[index] = updatedStory;
+        this.updatePagination(); // 👈 Refresh page view
         this.closeEditModal();
       },
       error: (err) => {
