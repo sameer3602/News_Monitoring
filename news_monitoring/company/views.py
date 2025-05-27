@@ -4,7 +4,9 @@ from django.contrib.auth.decorators import login_required
 
 from ..company.models import Company
 from ..forms.companyForm import CompanyForm
+from django.views.decorators.csrf import ensure_csrf_cookie
 
+@ensure_csrf_cookie
 @login_required
 def add_company(request):
     if request.method == "POST":
@@ -21,6 +23,8 @@ def add_company(request):
     return render(request, 'company/add_company.html', {'form': form})
 
 
+
+@ensure_csrf_cookie
 @login_required
 def search_companies(request):
     term = request.GET.get('q', '')

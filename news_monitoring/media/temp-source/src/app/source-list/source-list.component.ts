@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SourceService } from '../service/source.service';
-import { Source, Company } from './source.model';
+import { Source, Company, Story } from './source.model';
 
 @Component({
   selector: 'app-source-list',
@@ -104,17 +104,32 @@ export class SourceListComponent implements OnInit {
     });
   }
 
-  fetchSource(id: number): void {
-    this.sourceService.fetchSource(id).subscribe({
-      next: (source) => {
-        this.openEditModal(source);
-      },
-      error: (err) => {
-        console.error('Error fetching source:', err);
-        alert('Failed to fetch source data.');
-      },
-    });
-  }
+
+  // fetch stories
+  fetchedStories = signal<Story[]>([]);
+  showStoryModal = signal(false);
+
+  onFetchStories(sourceId: number): void {
+  this.sourceService.fetchStories(sourceId).subscribe({
+    next: (response) => {
+      // Limit to the first 10 stories
+      const limitedStories = response.stories.slice(0, 10);
+      this.fetchedStories.set(limitedStories);
+      this.showStoryModal.set(true);
+    },
+    error: (err) => {
+      console.error('Error fetching stories:', err);
+      alert('Failed to fetch stories from RSS feed.');
+    }
+  });
+}
+
+
+  closeStoryModal(): void {
+  this.showStoryModal.set(false);
+  this.fetchedStories.set([]);
+}
+
 
   openEditModal(source: Source): void {
     // Defensive copy to avoid mutating original source object
