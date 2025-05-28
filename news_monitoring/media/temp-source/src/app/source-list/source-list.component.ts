@@ -118,10 +118,12 @@ export class SourceListComponent implements OnInit {
   showStoryModal = signal(false);
 
   onFetchStories(sourceId: number): void {
+  this.isLoadingSources=true;
   this.sourceService.fetchStories(sourceId).subscribe({
     next: (response) => {
       // Limit to the first 10 stories
       const limitedStories = response.stories.slice(0, 10);
+      this.isLoadingSources=false;
       this.fetchedStories.set(limitedStories);
       this.showStoryModal.set(true);
     },
