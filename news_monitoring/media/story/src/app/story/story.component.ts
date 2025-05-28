@@ -22,7 +22,7 @@ export class StoryComponent implements OnInit {
   
   isLoadingStories = false;
 
-  // method to update filtered stories from input
+  // method to update filtered_stories from input
 
   onFilterChange(query: string): void {
     const lowerQuery = query.toLowerCase();
