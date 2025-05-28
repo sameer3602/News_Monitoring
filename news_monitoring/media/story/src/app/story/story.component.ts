@@ -1,7 +1,7 @@
 import { Component, computed, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { StoryService } from '../service/story.service';
+import { StoryCreatePayload, StoryService } from '../service/story.service';
 import { Story } from '../models/story.model';
 import { Company } from '../models/company.model';
 import { Source } from '../models/source.model';
@@ -50,7 +50,22 @@ export class StoryComponent implements OnInit {
   showDeleteModal = false;
 
   // Story form state
-  newStory: Partial<Story> = this.getEmptyStory();
+  newStory: {
+  title: string;
+  url: string;
+  published_date: string;
+  body_text: string;
+  source: Source | null;
+  tagged_companies: Company[];
+} = {
+  title: '',
+  url: '',
+  published_date: '',
+  body_text: '',
+  source: null,
+  tagged_companies: [],
+};
+
   editStory!: Story;
   deleteStoryId: number | null = null;
 
@@ -92,7 +107,7 @@ export class StoryComponent implements OnInit {
   filteredCompanies: Company[] = [];
 
   // Company search (Edit form)
-  editCompanySearch = '';
+  editCompanySearch: string = '';
   editFilteredCompanies: Company[] = [];
 
   constructor(private storyService: StoryService) {}
@@ -192,28 +207,47 @@ export class StoryComponent implements OnInit {
   }
 
   resetForm(): void {
-    this.newStory = this.getEmptyStory();
+    this.newStory = this.newStory;
     this.companySearch = '';
     this.filteredCompanies = [];
   }
 
   // ========== Add Story ==========
 
-  addStory(): void {
-    if (!this.isStoryValid(this.newStory)) {
-      alert('Please fill all fields');
-      return;
-    }
-
-    this.storyService.createStory(this.newStory as Story).subscribe({
-      next: (story) => {
-        this.stories.push(story);
-         this.updatePagination(); // 👈 Refresh page view
-        this.closeModal();
-      },
-      error: (err) => console.error('Failed to add story', err),
-    });
+addStory(): void {
+  if (
+    !this.newStory.title ||
+    !this.newStory.url ||
+    !this.newStory.published_date ||
+    !this.newStory.body_text ||
+    !this.newStory.source ||
+    this.newStory.tagged_companies.length === 0
+  ) {
+    alert('Please fill all fields');
+    return;
   }
+
+  // Prepare payload with source ID and company IDs for backend
+    const payload: StoryCreatePayload = {
+    title: this.newStory.title!,
+    url: this.newStory.url!,
+    published_date: this.newStory.published_date!,
+    body_text: this.newStory.body_text!,
+    source: this.newStory.source!.id,
+    tagged_company_ids: this.newStory.tagged_companies.map(c => c.id),
+  };
+
+
+  this.storyService.createStory(payload).subscribe({
+    next: (story) => {
+      this.stories.push(story);
+      this.updatePagination();
+      this.closeModal();
+    },
+    error: (err) => console.error('Failed to add story', err),
+  });
+}
+
 
   // ========== Edit Story ==========
 
@@ -232,11 +266,17 @@ export class StoryComponent implements OnInit {
       return;
     }
 
-    this.storyService.updateStory(this.editStory).subscribe({
+    const payload: any = {
+      ...this.editStory,
+      source: this.editStory.source?.id, // send source ID
+      tagged_companies: this.editStory.tagged_companies.map(c => c.id), // send company IDs
+    };
+
+    this.storyService.updateStory(payload).subscribe({
       next: (updatedStory) => {
         const index = this.stories.findIndex((s) => s.id === updatedStory.id);
         if (index !== -1) this.stories[index] = updatedStory;
-        this.updatePagination(); // 👈 Refresh page view
+        this.updatePagination();
         this.closeEditModal();
       },
       error: (err) => {
@@ -245,6 +285,7 @@ export class StoryComponent implements OnInit {
       },
     });
   }
+
 
   private isStoryValid(story: Partial<Story>): boolean {
     return (
@@ -297,22 +338,21 @@ export class StoryComponent implements OnInit {
 
   // ========== Company Select (Edit Story) ==========
 
-  filterEditCompanies(): void {
+  filterEditCompanies() {
     const search = this.editCompanySearch.toLowerCase();
     this.editFilteredCompanies = this.companies.filter(
-      (c) =>
-        c.name.toLowerCase().includes(search) &&
-        !this.editStory.tagged_companies.some((sel) => sel.id === c.id)
+      c => c.name.toLowerCase().includes(search) &&
+          !this.editStory.tagged_companies.some(tc => tc.id === c.id)
     );
-  }
+}
 
-  addCompanyToEditStory(company: Company): void {
-    this.editStory.tagged_companies.push(company);
-    this.editCompanySearch = '';
-    this.editFilteredCompanies = [];
-  }
+  addCompanyToEditStory(company: Company) {
+  this.editStory.tagged_companies.push(company);
+  this.editCompanySearch = '';
+  this.editFilteredCompanies = [];
+}
 
-  removeCompanyFromEditStory(index: number): void {
-    this.editStory.tagged_companies.splice(index, 1);
+  removeCompanyFromEditStory(company: Company) {
+    this.editStory.tagged_companies = this.editStory.tagged_companies.filter(c => c.id !== company.id);
   }
 }
