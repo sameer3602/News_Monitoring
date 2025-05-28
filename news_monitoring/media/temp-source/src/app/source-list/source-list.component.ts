@@ -150,6 +150,8 @@ export class SourceListComponent implements OnInit {
     this.editFilteredCompanies = this.companies.filter(c =>
       !this.editSource.tagged_companies.some(sel => sel.id === c.id)
     );
+    this.editCompanySearch = '';  // clear input
+    this.editFilteredCompanies = []; // Clear the list initially
     this.showEditModal = true;
 }
 
