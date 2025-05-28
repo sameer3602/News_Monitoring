@@ -208,17 +208,18 @@
 
         <!-- Input for typing search -->
         <input
-          type="text"
-          [(ngModel)]="editCompanySearch"
-          (input)="filterEditCompanies()"
-          (keydown.enter)="$event.preventDefault()"
-          placeholder="Search and add companies..."
-          class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+            type="text"
+            [(ngModel)]="editCompanySearch"
+            (input)="filterEditCompanies()"
+            (keydown.enter)="$event.preventDefault()"
+            placeholder="Search and add companies..."
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            name="editCompanySearch"
+          />
+
 
         <!-- Dropdown with filtered companies -->
-        <ul
-          *ngIf="filteredCompanies.length > 0"
+        <ul *ngIf="editFilteredCompanies.length > 0"
           class="absolute z-50 bg-white border border-gray-300 rounded mt-1 max-h-48 overflow-auto w-full shadow-lg"
         >
           <li
@@ -229,6 +230,7 @@
             {{ company.name }}
           </li>
         </ul>
+
 
         <!-- Selected tagged companies as chips -->
         <div class="flex flex-wrap gap-2 mt-2">

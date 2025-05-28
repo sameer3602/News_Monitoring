@@ -263,6 +263,7 @@ export class StoryComponent implements OnInit {
       this.storyService.deleteStory(this.deleteStoryId).subscribe({
         next: () => {
           this.stories = this.stories.filter((s) => s.id !== this.deleteStoryId);
+          this.updatePagination();
           this.closeDeleteModal();
         },
         error: (err) => {

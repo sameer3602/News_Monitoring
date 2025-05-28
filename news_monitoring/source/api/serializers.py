@@ -8,15 +8,18 @@ class CompanySerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 class SourceSerializer(serializers.ModelSerializer):
-    # Used for POST/PUT/PATCH
     tagged_companies = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=Company.objects.all(),
-        write_only=True
+        queryset=Company.objects.all()
     )
-    # Used for GET
-    tagged_companies_detail = CompanySerializer(source='tagged_companies', many=True, read_only=True)
 
     class Meta:
         model = Source
-        fields = ['id', 'name', 'url', 'tagged_companies', 'tagged_companies_detail']
+        fields = ['id', 'name', 'url', 'tagged_companies']
+
+    def to_representation(self, instance):
+        # Get the default representation
+        rep = super().to_representation(instance)
+        # Replace tagged_companies IDs with serialized objects
+        rep['tagged_companies'] = CompanySerializer(instance.tagged_companies.all(), many=True).data
+        return rep
