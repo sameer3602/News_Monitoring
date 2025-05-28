@@ -41,16 +41,22 @@
     <!-- Story rows -->
     <tr *ngFor="let story of filteredStories" class="hover:bg-gray-50">
       <td class="border border-gray-300 px-4 py-2">{{ story.title }}</td>
-      <td class="border border-gray-300 px-4 py-2">{{ story.source?.name }}</td>
+      <td class="border border-gray-300 px-4 py-2">{{ story.source?.name ?? 'No source available' }}</td>
       <td class="border border-gray-300 px-4 py-2">{{ story.published_date | date: 'shortDate' }}</td>
       <td class="border border-gray-300 px-4 py-2">
         <a [href]="story.url" target="_blank" class="text-blue-600 hover:underline">Link</a>
       </td>
       <td class="border border-gray-300 px-4 py-2">
-        <span *ngFor="let company of story.tagged_companies; let i = index" class="inline-block">
-          {{ company.name }}<span *ngIf="i < story.tagged_companies.length - 1">, </span>
-        </span>
+        <ng-container *ngIf="story.tagged_companies && story.tagged_companies.length > 0; else noCompanies">
+          <span *ngFor="let company of story.tagged_companies; let i = index" class="inline-block">
+            {{ company.name }}<span *ngIf="i < story.tagged_companies.length - 1">, </span>
+          </span>
+        </ng-container>
+        <ng-template #noCompanies>
+          <span class="text-gray-500 italic">No companies tagged</span>
+        </ng-template>
       </td>
+
       <td class="border border-gray-300 px-4 py-2 space-x-2">
         <button
           (click)="fetchStory(story.id)"
@@ -96,7 +102,7 @@
       </div>
 
       <!-- Source -->
-      <div>
+      <!-- <div>
         <label class="block mb-1 font-medium text-gray-700">Source:</label>
         <select
           [(ngModel)]="newStory.source"
@@ -108,7 +114,7 @@
             source.name
           }}</option>
         </select>
-      </div>
+      </div> -->
 
       <!-- Published Date -->
       <div>

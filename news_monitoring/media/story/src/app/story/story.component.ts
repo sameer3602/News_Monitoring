@@ -1,7 +1,7 @@
 import { Component, computed, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { StoryCreatePayload, StoryService } from '../service/story.service';
+import { StoryService } from '../service/story.service';
 import { Story } from '../models/story.model';
 import { Company } from '../models/company.model';
 import { Source } from '../models/source.model';
@@ -50,22 +50,7 @@ export class StoryComponent implements OnInit {
   showDeleteModal = false;
 
   // Story form state
-  newStory: {
-  title: string;
-  url: string;
-  published_date: string;
-  body_text: string;
-  source: Source | null;
-  tagged_companies: Company[];
-} = {
-  title: '',
-  url: '',
-  published_date: '',
-  body_text: '',
-  source: null,
-  tagged_companies: [],
-};
-
+  newStory: Partial<Story> = this.getEmptyStory();
   editStory!: Story;
   deleteStoryId: number | null = null;
 
@@ -207,46 +192,34 @@ export class StoryComponent implements OnInit {
   }
 
   resetForm(): void {
-    this.newStory = this.newStory;
+    this.newStory = this.getEmptyStory();
     this.companySearch = '';
     this.filteredCompanies = [];
   }
 
   // ========== Add Story ==========
 
-addStory(): void {
-  if (
-    !this.newStory.title ||
-    !this.newStory.url ||
-    !this.newStory.published_date ||
-    !this.newStory.body_text ||
-    !this.newStory.source ||
-    this.newStory.tagged_companies.length === 0
-  ) {
-    alert('Please fill all fields');
-    return;
+  addStory(): void {
+    if (!this.isStoryValid(this.newStory)) {
+      alert('Please fill all fields');
+      return;
+    }
+
+    const payload: any = {
+      ...this.newStory,
+      source: this.newStory.source?.id, // send source ID
+      tagged_companies: (this.newStory.tagged_companies || []).map(c => c.id), // send company IDs
+    };
+
+    this.storyService.createStory(payload).subscribe({
+      next: (story) => {
+        this.stories.push(story);
+        this.updatePagination();
+        this.closeModal();
+      },
+      error: (err) => console.error('Failed to add story', err),
+    });
   }
-
-  // Prepare payload with source ID and company IDs for backend
-    const payload: StoryCreatePayload = {
-    title: this.newStory.title!,
-    url: this.newStory.url!,
-    published_date: this.newStory.published_date!,
-    body_text: this.newStory.body_text!,
-    source: this.newStory.source!.id,
-    tagged_company_ids: this.newStory.tagged_companies.map(c => c.id),
-  };
-
-
-  this.storyService.createStory(payload).subscribe({
-    next: (story) => {
-      this.stories.push(story);
-      this.updatePagination();
-      this.closeModal();
-    },
-    error: (err) => console.error('Failed to add story', err),
-  });
-}
 
 
   // ========== Edit Story ==========

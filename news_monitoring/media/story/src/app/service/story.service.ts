@@ -12,7 +12,7 @@ export interface StoryCreatePayload {
   url: string;
   published_date: string;
   body_text: string;
-  source: number;
+  source_id: number;
   tagged_company_ids: number[];
 }
 
@@ -32,7 +32,8 @@ export class StoryService {
     return this.http.get<Story[]>(this.baseUrl, this._httpOptions());
   }
 
-   createStory(payload: StoryCreatePayload): Observable<Story> {
+  createStory(story: Story): Observable<Story> {
+    const payload = this._normalizeStory(story);
     return this.http.post<Story>(this.baseUrl, payload, this._httpOptions());
   }
 
@@ -60,7 +61,7 @@ export class StoryService {
       url: story.url,
       published_date: story.published_date,
       body_text: story.body_text,
-      source: story.source?.id ?? 0,
+      source_id: story.source?.id ?? 0,
       tagged_company_ids: story.tagged_companies.map((c) => c.id),
     };
   }
