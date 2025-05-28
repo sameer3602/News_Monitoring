@@ -54,15 +54,14 @@ export class StoryService {
     return this.http.get<Company[]>(this.companiesUrl, this._httpOptions());
   }
 
-    // Normalize story for PUT request
-  private _normalizeStory(story: Story): StoryCreatePayload {
+  private _normalizeStory(story: Story): any {
     return {
-      title: story.title,
-      url: story.url,
-      published_date: story.published_date,
-      body_text: story.body_text,
-      source_id: story.source?.id ?? 0,
-      tagged_company_ids: story.tagged_companies.map((c) => c.id),
+      ...story,
+      tagged_companies_ids: Array.isArray(story.tagged_companies)
+        ? story.tagged_companies.map((company: any) =>
+            typeof company === 'object' ? company.id : company
+          )
+        : [],
     };
   }
 

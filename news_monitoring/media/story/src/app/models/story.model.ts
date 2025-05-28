@@ -7,6 +7,6 @@ export interface Story {
   url: string;
   published_date: string;
   body_text: string;
-  source: Source | null;  // <-- use Source from source.model.ts
+  source: Source | null ;  // <-- use Source from source.model.ts
   tagged_companies:Company[]; // keep consistent too
 }

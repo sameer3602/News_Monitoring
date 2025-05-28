@@ -56,7 +56,7 @@ export class StoryComponent implements OnInit {
 
   // Pagination
     page = 1;
-    pageSize = 8; // ✅ Show 8 stories per page
+    pageSize = 8; // Shows 8 stories per page
     totalPages = 1;
     hasPrev = false;
     hasNext = false;
@@ -92,7 +92,7 @@ export class StoryComponent implements OnInit {
   filteredCompanies: Company[] = [];
 
   // Company search (Edit form)
-  editCompanySearch: string = '';
+  editCompanySearch = '';
   editFilteredCompanies: Company[] = [];
 
   constructor(private storyService: StoryService) {}
@@ -208,7 +208,7 @@ export class StoryComponent implements OnInit {
     const payload: any = {
       ...this.newStory,
       source: this.newStory.source?.id, // send source ID
-      tagged_companies: (this.newStory.tagged_companies || []).map(c => c.id), // send company IDs
+      tagged_companies_ids: (this.newStory.tagged_companies || []).map(c => c.id), // send company IDs
     };
 
     this.storyService.createStory(payload).subscribe({
@@ -242,7 +242,7 @@ export class StoryComponent implements OnInit {
     const payload: any = {
       ...this.editStory,
       source: this.editStory.source?.id, // send source ID
-      tagged_companies: this.editStory.tagged_companies.map(c => c.id), // send company IDs
+      tagged_companies_ids: this.editStory.tagged_companies.map(c => c.id), // send company IDs
     };
 
     this.storyService.updateStory(payload).subscribe({

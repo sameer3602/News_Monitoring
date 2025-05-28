@@ -10,21 +10,22 @@ class CompanySerializer(serializers.ModelSerializer):
 class SourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Source
-        fields = ['id', 'name', 'url']
-
+        fields = ['id', 'name']
+        
 class StorySerializer(serializers.ModelSerializer):
-    tagged_companies = CompanySerializer(many=True, read_only=True)
     source = SourceSerializer(read_only=True)
-
+    tagged_companies_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        write_only=True,
+        queryset=Company.objects.all()
+    )
+    tagged_companies = CompanySerializer(many=True, read_only=True)
+    def update(self, instance, validated_data):
+        company_ids = validated_data.pop('tagged_companies_ids', None)
+        instance = super().update(instance, validated_data)
+        if company_ids is not None:
+            instance.tagged_companies.set(company_ids)
+        return instance
     class Meta:
         model = Story
         fields = '__all__'
-
-    # This part is necessary for POST/PUT to accept company/source IDs
-    def to_internal_value(self, data):
-        data = data.copy()
-        if isinstance(data.get('tagged_companies'), list):
-            data['tagged_companies'] = [int(pk) for pk in data['tagged_companies']]
-        if data.get('source'):
-            data['source'] = int(data['source'])
-        return super().to_internal_value(data)
