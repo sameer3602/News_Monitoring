@@ -8,28 +8,50 @@
     
 </head>
 <body class="bg-gray-50 text-gray-800 h-screen flex flex-col">
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
 
     <!-- Navbar -->
-    <nav class="bg-white shadow-md py-4 px-8 flex items-center justify-between">
-        <a href="{% url 'home' %}" class="text-xl font-bold text-blue-600">NewsMonitor</a>
+<nav class="bg-white shadow-md py-4 px-6 md:px-12 flex items-center justify-between sticky top-0 z-50">
+    <a href="{% url 'home' %}" class="text-2xl font-extrabold text-blue-600 hover:text-blue-800 transition-colors duration-300">
+        NewsMonitor
+    </a>
 
+    {% if user.is_authenticated %}
+    <div class="flex space-x-10 hidden sm:flex">
+        <a href="/sources"
+           class="bg-blue-500 text-white font-semibold px-4 py-2 rounded-3xl hover:bg-blue-800  transition duration-200">
+           Sources
+        </a>
+        <a href="/story"
+           class="bg-blue-500 text-white font-semibold px-4 py-2 rounded-3xl hover:bg-blue-800 transition duration-200">
+           Stories
+        </a>
+    </div>
+    {% endif %}
+
+    <div class="flex items-center space-x-10">
         {% if user.is_authenticated %}
-        <div class="space-x-6">
-            <a href="/sources" class="text-gray-700 hover:text-blue-600 font-bold">Sources</a>
-            <a href="/story" class="text-gray-700 hover:text-blue-600 font-bold">Stories</a>
-        </div>
+            <span class="text-gray-600 font-medium mr-2">
+                Hi, <span class="font-semibold text-blue-700">{{ user.username }}</span>
+            </span>
+            <a href="{% url 'users:logout' %}"
+               class="bg-red-500 text-white font-semibold px-4 py-2 rounded-3xl hover:bg-red-600 transition duration-200">
+               Logout
+            </a>
+        {% else %}
+            <a href="{% url 'users:login' %}"
+               class="bg-blue-500 text-white font-semibold px-4 py-2 rounded-3xl hover:bg-blue-600 transition duration-200">
+               Login
+            </a>
+            <a href="{% url 'users:signup' %}"
+               class="bg-green-500 text-white font-semibold px-4 py-2 rounded-3xl hover:bg-green-600 transition duration-200">
+               Sign Up
+            </a>
         {% endif %}
+    </div>
+</nav>
 
-        <div class="flex items-center space-x-4">
-            {% if user.is_authenticated %}
-                <span class="text-gray-600">Hi, {{ user.username }}</span>
-                <a href="{% url 'users:logout' %}" class="text-red-500 hover:underline">Logout</a>
-            {% else %}
-                <a href="{% url 'users:login' %}" class="text-blue-500 hover:underline">Login</a>
-                <a href="{% url 'users:signup' %}" class="text-blue-500 hover:underline">Sign Up</a>
-            {% endif %}
-        </div>
-    </nav>
+
 
     <!-- Angular Content Mounts Here -->
     <main class="flex-grow p-6">
