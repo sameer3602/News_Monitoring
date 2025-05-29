@@ -117,22 +117,25 @@ export class SourceListComponent implements OnInit {
   fetchedStories = signal<Story[]>([]);
   showStoryModal = signal(false);
 
-  onFetchStories(sourceId: number): void {
-  this.isLoadingSources=true;
+onFetchStories(sourceId: number): void {
+  this.isLoadingSources = true;
   this.sourceService.fetchStories(sourceId).subscribe({
     next: (response) => {
-      // Limit to the first 10 stories
-      const limitedStories = response.stories.slice(0, 10);
-      this.isLoadingSources=false;
+      // Fallback to empty array if stories is undefined
+      const stories = response?.stories ?? [];
+      const limitedStories = stories.slice(0, 10);
+      this.isLoadingSources = false;
       this.fetchedStories.set(limitedStories);
       this.showStoryModal.set(true);
     },
     error: (err) => {
       console.error('Error fetching stories:', err);
       alert('Failed to fetch stories from RSS feed.');
+      this.isLoadingSources = false;
     }
   });
 }
+
 
 
   closeStoryModal(): void {

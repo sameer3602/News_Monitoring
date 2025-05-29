@@ -11,8 +11,9 @@ from rest_framework.authtoken.views import obtain_auth_token
 from news_monitoring.source.api import api_views
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
-    path('api/v1/', include('news_monitoring.source.api.api_urls', namespace="sources")),
-    path('api/v1/', include('news_monitoring.story.api.api_urls',namespace="stories")),
+    path('api/v1/sources/', include('news_monitoring.source.api.api_urls', namespace="sources")),
+    path('api/v1/stories/', include('news_monitoring.story.api.api_urls',namespace="stories")),
+    path('api/v1/companies/', include('news_monitoring.company.api.api_urls',namespace="companies")),
     path('api/v1/sources/<int:source_id>/fetch_stories/', api_views.fetch_stories, name='api_fetch_stories'),
     # # path('api/', include('story.urls')),
     # Django Admin, use {% url 'admin:index' %}

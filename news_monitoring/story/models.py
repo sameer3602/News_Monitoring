@@ -5,9 +5,9 @@ from news_monitoring.users.models import User
 
 
 class Story(models.Model):
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=1000)
     body_text = models.TextField()
-    url = models.URLField(max_length=200)
+    url = models.URLField(max_length=1000)
     published_date = models.DateTimeField()
     source = models.ForeignKey(Source, on_delete=models.CASCADE,null=True,blank=True)
     tagged_companies = models.ManyToManyField(Company)

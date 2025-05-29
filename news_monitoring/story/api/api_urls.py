@@ -5,7 +5,7 @@ from django.urls import path, include
 app_name = "stories"
 
 router = DefaultRouter()
-router.register(r'stories', StoryViewSet, basename='story')
+router.register(r'', StoryViewSet, basename='story')
 
 urlpatterns = [
     path('', include(router.urls)),

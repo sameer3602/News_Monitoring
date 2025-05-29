@@ -1,4 +1,4 @@
-<div class="p-6 max-w-4xl mx-auto overflow-x-auto bg-white rounded-lg shadow-md">
+<div class="p-6 max-w-5xl mx-auto overflow-x-auto bg-white rounded-lg shadow-md">
   <button
     (click)="openModal()"
     class="mb-6 px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition focus:outline-none focus:ring-4 focus:ring-blue-400 font-semibold"
@@ -56,16 +56,24 @@
     </tbody>
   </table>
 
-  <div class="flex justify-between items-center mt-4">
-    <button (click)="prevPage()" [disabled]="!hasPrev" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 disabled:opacity-50">
-      Previous
-    </button>
-
-    <span>Page {{ page }}</span>
-
-    <button (click)="nextPage()" [disabled]="!hasNext" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 disabled:opacity-50">
-      Next
-    </button>
+    <div class="flex justify-center items-center gap-4 mt-4">
+    <!-- Prev Button -->
+      <button
+        (click)="prevPage()"
+        [disabled]="!hasPrev"
+        class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50"
+      >
+        Previous
+      </button>
+      <span>Page {{ page }}</span>
+      <!-- Next Button -->
+      <button
+        (click)="nextPage()"
+        [disabled]="!hasNext"
+        class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50"
+      >
+        Next
+      </button>
   </div>
 
 
@@ -306,10 +314,18 @@
     <h2 class="text-xl font-semibold mb-4 text-gray-800">Fetched Stories</h2>
 
     <ul class="space-y-4">
-      <li *ngFor="let story of fetchedStories()" class="border-b pb-2">
-        <p class="text-base font-medium text-gray-900">{{ story.title }}</p>
-        <p class="text-sm text-gray-500">{{ story.published_date | date: 'medium' }}</p>
-      </li>
+      <ng-container *ngIf="(fetchedStories()?.length || 0) > 0; else noStories">
+        <ul class="space-y-4">
+          <li *ngFor="let story of fetchedStories()" class="border-b pb-2">
+            <p class="text-base font-medium text-gray-900">{{ story.title }}</p>
+            <p class="text-sm text-gray-500">{{ story.published_date | date: 'medium' }}</p>
+          </li>
+        </ul>
+      </ng-container>
+
+      <ng-template #noStories>
+        <p class="text-gray-500 text-sm">No new stories.</p>
+      </ng-template>
     </ul>
 
     <div class="mt-6 text-right">

@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.db.models import Q, Prefetch
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
 from news_monitoring.company.models import Company
@@ -255,7 +255,6 @@ def fetch_rss(request):
     return redirect('story:view_stories')
 
 
-from django.views.decorators.csrf import ensure_csrf_cookie
 
 @ensure_csrf_cookie
 @login_required

@@ -1,11 +1,11 @@
-from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from news_monitoring.source.models import Source
-from news_monitoring.company.models import Company
-from .serializers import SourceSerializer, CompanySerializer
+from .serializers import SourceSerializer
 from rest_framework.exceptions import PermissionDenied
 import feedparser
 from rest_framework.decorators import action, permission_classes, api_view
@@ -50,12 +50,6 @@ class SourceViewSet(viewsets.ModelViewSet):
         instance.delete()
 
 
-class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Company.objects.all()
-    serializer_class = CompanySerializer
-    permission_classes = [IsAuthenticated]
-
-
 @ensure_csrf_cookie
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -66,47 +60,51 @@ def fetch_stories(request, source_id):
     entries = feed.entries
 
     if not entries:
-        return Response({"message": "No stories found in the RSS feed."}, status=200)
+        return Response({"message": "No stories found in the RSS feed."}, status=status.HTTP_204_NO_CONTENT)
 
     tagged_companies = list(source.tagged_companies.all())
     if source.company and source.company not in tagged_companies:
         tagged_companies.append(source.company)
 
-    new_stories = 0
     story_data = []
+    stories_to_create = []
+    existing_stories = set(
+        Story.objects.filter(source=source).values_list('title', 'url')
+    )
 
     for entry in entries:
         title = entry.get('title', '').strip()
         url = entry.get('link', '').strip()
-        if not title or not url:
+        if not title or not url or (title, url) in existing_stories:
             continue
 
         published_parsed = entry.get('published_parsed')
-        published_date = timezone.datetime(*published_parsed[:6]) if published_parsed else timezone.now()
+        published_date = (
+            timezone.datetime(*published_parsed[:6]) if published_parsed
+            else timezone.now()
+        )
         body_text = entry.get('summary', '')[:1000]
 
-        story, created = Story.objects.get_or_create(
+        story = Story(
             title=title,
             url=url,
             source=source,
-            defaults={
-                'published_date': published_date,
-                'body_text': body_text,
-            }
+            published_date=published_date,
+            body_text=body_text
         )
-
-        if created:
-            story.tagged_companies.set(tagged_companies)
-            new_stories += 1
-
+        stories_to_create.append(story)
+    created_stories = Story.objects.bulk_create(stories_to_create)
+    for story in created_stories:
         story_data.append({
             "title": story.title,
             "published_date": story.published_date,
         })
+        story.tagged_companies.set(tagged_companies)
 
-    return Response({
-        "message": f"{new_stories} new stor{'y' if new_stories == 1 else 'ies'} added.",
-        "stories": story_data
-    }, status=200)
-
-
+    # serialized_stories = StorySerializer(created_stories, many=True)
+    # return Response(
+    #     {"stories":serialized_stories.data,"message": f"{len(created_stories)} new stor{'y' if len(created_stories) == 1 else 'ies'} added."},
+    #     status=status.HTTP_201_CREATED if created_stories else status.HTTP_200_OK
+    # )
+    print("stories are",story_data,created_stories)
+    return Response({"stories": story_data,"message": f"{len(created_stories)} new stor{'y' if len(created_stories) == 1 else 'ies'} added."}, status=200)

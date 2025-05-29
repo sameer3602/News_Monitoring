@@ -27,11 +27,11 @@ export class StoryComponent implements OnInit {
   onFilterChange(query: string): void {
     const lowerQuery = query.toLowerCase();
 
-    const filtered = this.stories.filter(story =>
-      story.title.toLowerCase().includes(lowerQuery) ||
-      story.body_text.toLowerCase().includes(lowerQuery) ||
-      story.source?.name.toLowerCase().includes(lowerQuery)
-    );
+      const filtered = (this.stories ?? []).filter(story =>
+        (story.title ?? '').toLowerCase().includes(lowerQuery) ||
+        (story.body_text ?? '').toLowerCase().includes(lowerQuery) ||
+        (story.source?.name ?? '').toLowerCase().includes(lowerQuery)
+      );
 
     this.page = 1;
     this.totalPages = Math.ceil(filtered.length / this.pageSize);

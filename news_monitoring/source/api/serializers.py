@@ -1,11 +1,8 @@
 from rest_framework import serializers
+from news_monitoring.company.api.serializers import CompanySerializer
 from news_monitoring.source.models import Source
 from news_monitoring.company.models import Company
 
-class CompanySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Company
-        fields = ['id', 'name']
 
 class SourceSerializer(serializers.ModelSerializer):
     tagged_companies = serializers.PrimaryKeyRelatedField(
