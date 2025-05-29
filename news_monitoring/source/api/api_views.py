@@ -1,5 +1,5 @@
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render
+from django.db import transaction
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import viewsets, status
@@ -8,9 +8,11 @@ from news_monitoring.source.models import Source
 from .serializers import SourceSerializer
 from rest_framework.exceptions import PermissionDenied
 import feedparser
-from rest_framework.decorators import action, permission_classes, api_view
+from rest_framework.decorators import  permission_classes, api_view
 from rest_framework.response import Response
 from news_monitoring.story.models import Story
+from django.contrib.postgres.aggregates import ArrayAgg
+
 
 
 class SourceViewSet(viewsets.ModelViewSet):
@@ -54,7 +56,10 @@ class SourceViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def fetch_stories(request, source_id):
-    source = get_object_or_404(Source.objects.prefetch_related('tagged_companies', 'company'), pk=source_id)
+    source = get_object_or_404(  Source.objects.select_related('company').annotate(
+            tagged_company_ids=ArrayAgg('tagged_companies__id', distinct=True),
+            tagged_company_names=ArrayAgg('tagged_companies__name', distinct=True)),pk=source_id
+    )
 
     feed = feedparser.parse(source.url)
     entries = feed.entries
@@ -62,49 +67,62 @@ def fetch_stories(request, source_id):
     if not entries:
         return Response({"message": "No stories found in the RSS feed."}, status=status.HTTP_204_NO_CONTENT)
 
+    # Prepare tagged companies
     tagged_companies = list(source.tagged_companies.all())
     if source.company and source.company not in tagged_companies:
         tagged_companies.append(source.company)
 
-    story_data = []
-    stories_to_create = []
+    # Convert to set of tuples for faster lookup
     existing_stories = set(
         Story.objects.filter(source=source).values_list('title', 'url')
     )
 
+    stories_to_create = []
     for entry in entries:
         title = entry.get('title', '').strip()
         url = entry.get('link', '').strip()
         if not title or not url or (title, url) in existing_stories:
             continue
 
-        published_parsed = entry.get('published_parsed')
         published_date = (
-            timezone.datetime(*published_parsed[:6]) if published_parsed
+            timezone.datetime(*entry.published_parsed[:6])
+            if entry.get('published_parsed')
             else timezone.now()
         )
         body_text = entry.get('summary', '')[:1000]
 
-        story = Story(
-            title=title,
-            url=url,
-            source=source,
-            published_date=published_date,
-            body_text=body_text
+        stories_to_create.append(
+            Story(
+                title=title,
+                url=url,
+                source=source,
+                published_date=published_date,
+                body_text=body_text,
+            )
         )
-        stories_to_create.append(story)
-    created_stories = Story.objects.bulk_create(stories_to_create)
-    for story in created_stories:
-        story_data.append({
-            "title": story.title,
-            "published_date": story.published_date,
-        })
-        story.tagged_companies.set(tagged_companies)
 
-    # serialized_stories = StorySerializer(created_stories, many=True)
-    # return Response(
-    #     {"stories":serialized_stories.data,"message": f"{len(created_stories)} new stor{'y' if len(created_stories) == 1 else 'ies'} added."},
-    #     status=status.HTTP_201_CREATED if created_stories else status.HTTP_200_OK
-    # )
-    print("stories are",story_data,created_stories)
-    return Response({"stories": story_data,"message": f"{len(created_stories)} new stor{'y' if len(created_stories) == 1 else 'ies'} added."}, status=200)
+    if not stories_to_create:
+        return Response({"message": "No new stories to add."}, status=status.HTTP_200_OK)
+
+    # Atomic transaction for story creation and M2M assignments
+    with transaction.atomic():
+        created_stories = Story.objects.bulk_create(stories_to_create)
+
+        # Get the through model dynamically
+        throughModel = Story.tagged_companies.through
+
+        set_tagged_companies = []
+        for story in created_stories:
+            for company in tagged_companies:
+                set_tagged_companies.append(throughModel(story_id=story.id, company_id=company.id))
+
+        throughModel.objects.bulk_create(set_tagged_companies)
+    story_data = [
+        {"title": story.title, "published_date": story.published_date}
+        for story in created_stories
+    ]
+
+    return Response({
+        "stories": story_data,
+        "message": f"{len(created_stories)} new stor{'y' if len(created_stories) == 1 else 'ies'} added."
+    }, status=status.HTTP_201_CREATED)
