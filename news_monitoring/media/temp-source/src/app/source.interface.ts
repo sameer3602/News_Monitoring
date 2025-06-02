@@ -19,3 +19,12 @@ export interface Story {
   source: Source | null;  // <-- use Source from source.model.ts
   tagged_companies:Company[]; // keep consistent too
 }
+
+export interface PaginatedSourcesResponse {
+  results: Source[];
+  page_number: number;
+  has_next: boolean;
+  has_prev: boolean;
+  total_count: number;
+  page_size: number;
+}

@@ -12,5 +12,10 @@ class Source(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="%(class)s_created")
     updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="%(class)s_updated")
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['company', 'url'], name='unique_source_url')
+        ]
+
     def __str__(self):
         return self.name

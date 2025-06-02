@@ -1,3 +1,100 @@
+<div class="p-6 max-w-5xl mx-auto overflow-x-auto bg-white rounded-lg shadow-md">
+  <button
+    (click)="openAdd()"
+    class="mb-6 px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition focus:outline-none focus:ring-4 focus:ring-blue-400 font-semibold"
+  >
+    Add Source
+  </button>
 
-<router-outlet></router-outlet>
-<app-source-list></app-source-list>
+
+<table class="min-w-full border border-gray-300 rounded-lg overflow-hidden table-auto">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="text-left px-4 py-2 border-b border-gray-300">Name</th>
+        <th class="text-left px-4 py-2 border-b border-gray-300 max-w-xs break-words">URL</th>
+        <th class="text-left px-4 py-2 border-b border-gray-300">Tagged Companies</th>
+        <th class="text-left px-4 py-2 border-b border-gray-300">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+       <!-- Spinner row -->
+      <div *ngIf="isLoadingSources" class="fixed inset-0 bg-white bg-opacity-75 flex justify-center items-center z-50">
+        <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+
+
+      <!-- Source rows -->
+      <tr *ngFor="let source of sources()" class="hover:bg-gray-50">
+        <td class="px-4 py-2 border-b border-gray-200 break-words max-w-xs">{{ source.name }}</td>
+        <td class="px-4 py-2 border-b border-gray-200 break-all max-w-xs">
+          <a
+            [href]="source.url"
+            target="_blank"
+            class="text-blue-600 underline hover:text-blue-800 break-words"
+            >{{ source.url }}</a
+          >
+        </td>
+        <td class="px-4 py-2 border-b border-gray-200 break-words">
+          <span *ngFor="let c of source.tagged_companies; let last = last">
+            {{ c.name }}<span *ngIf="!last">, </span>
+          </span>
+        </td>
+        <td class="px-4 py-2 border-b border-gray-200 space-x-2 whitespace-nowrap">
+          <button class="text-blue-600 hover:text-blue-800 font-semibold" (click)="onFetchStories(source.id)">
+            Fetch Stories
+          </button>
+
+
+          <button
+            (click)="openEdit(source)"
+            class="text-green-600 hover:text-green-800 font-semibold"
+          >
+            Edit
+          </button>
+          <button (click)="openDeleteModal(source.id)" class="text-red-600 hover:text-red-800 font-semibold">Delete</button>
+
+        </td>
+      </tr>
+    </tbody>
+  </table>
+<!-- Pagination Controls -->
+<div class="mt-4 flex justify-center space-x-9">
+  <button class="px-2 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition focus:outline-none focus:ring-4 focus:ring-blue-400 font-semibold"[disabled]="currentPage() === 1"(click)="setPage(currentPage() - 1)">
+    Previous
+  </button>
+    <div class="mt-1 text-black-600 font-semibold"><span>{{currentPage()}}</span></div>
+    <button
+        [disabled]="!hasNextPage()"
+        (click)="onNextPage()"
+        class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-700 transition focus:outline-none focus:ring-4 focus:ring-blue-400 font-semibold">
+        Next
+    </button>
+
+
+
+</div>
+
+
+<!-- edit and add  -->
+
+<app-add-update-source
+  *ngIf="modalMode"
+  [isEdit]="modalMode === 'edit'"
+  [sourceData]="selectedSource"
+  [companies]="companies()"
+  (save)="saveSource($event)"
+  (close)="closeModal()"
+/>
+
+
+<!-- delete -->
+
+<app-delete-source
+  *ngIf="showDeleteModal"
+  [sourceId]="selectedSourceId!"
+  [sourceName]="selectedSourceName"
+  (deleted)="handleSourceDeleted()"
+  (closed)="closeDeleteModal()"/>
+
+<!-- fetch stories component -->
+<app-fetch-stories #fetchStoriesComp></app-fetch-stories>

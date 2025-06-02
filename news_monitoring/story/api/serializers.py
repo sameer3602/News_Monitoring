@@ -1,42 +1,33 @@
 from rest_framework import serializers
-from rest_framework.exceptions import PermissionDenied
-
 from news_monitoring.story.models import Story
 from news_monitoring.source.models import Company
-from news_monitoring.source.api.serializers import SourceSerializer
-from news_monitoring.company.api.serializers import CompanySerializer
+
+class CompanySimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = ["id", "name"]
 
 class StorySerializer(serializers.ModelSerializer):
-    source = SourceSerializer(read_only=True)
-    tagged_companies_ids = serializers.PrimaryKeyRelatedField(
-        many=True,
-        write_only=True,
-        queryset=Company.objects.all()
+    # Used for writing (accepts list of IDs)
+    tagged_companies = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Company.objects.all(), write_only=True
     )
-    tagged_companies = CompanySerializer(many=True, read_only=True)
 
-    # for updating the story
-    def update(self, instance, validated_data):
-        company_ids = validated_data.pop('tagged_companies_ids', None)
-        instance = super().update(instance, validated_data)
-        if company_ids is not None:
-            instance.tagged_companies.set(company_ids)
-        return instance
-
-    # for creating the story
-    def create(self, validated_data):
-        company_ids = validated_data.pop('tagged_companies_ids', [])
-        story = Story.objects.create(**validated_data)
-        story.tagged_companies.set(company_ids)
-        return story
-
-    # for deleting the story
-    def delete(self, instance):
-        user = self.request.user
-        if not user.is_staff and user.company not in instance.tagged_companies.all():
-            raise PermissionDenied("You don't have permission to delete this story.")
-        instance.delete()
+    # Used for reading (returns list of objects with id and name)
+    tagged_companies_details = CompanySimpleSerializer(
+        many=True, source='tagged_companies', read_only=True
+    )
 
     class Meta:
         model = Story
-        fields = '__all__'
+        fields = [
+            "id",
+            "title",
+            "body_text",
+            "url",
+            "published_date",
+            "created_by",
+            "updated_by",
+            "tagged_companies",          # for write
+            "tagged_companies_details",  # for read
+        ]

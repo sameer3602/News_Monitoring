@@ -2,9 +2,8 @@ import { Component, computed, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoryService } from '../service/story.service';
-import { Story } from '../models/story.model';
-import { Company } from '../models/company.model';
-import { Source } from '../models/source.model';
+import { Story,Company,Source} from '../story.interface';
+
 
 @Component({
   selector: 'app-story',

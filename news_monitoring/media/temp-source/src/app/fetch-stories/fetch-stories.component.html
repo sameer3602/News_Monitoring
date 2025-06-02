@@ -1,1 +1,34 @@
-<p>fetch-stories works!</p>
+<!-- Fetched Stories Modal -->
+<div *ngIf="showStoryModal()" class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+  <div class="bg-white rounded-2xl shadow-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+    <h2 class="text-xl font-semibold mb-4 text-gray-800">Fetched Stories</h2>
+
+    <ng-container *ngIf="isLoading(); else storyList">
+      <p class="text-gray-500 text-sm">Loading stories...</p>
+    </ng-container>
+
+    <ng-template #storyList>
+      <ul class="space-y-4">
+        <ng-container *ngIf="(fetchedStories()?.length || 0) > 0; else noStories">
+          <li *ngFor="let story of fetchedStories()" class="border-b pb-2">
+            <p class="text-base font-medium text-gray-900">{{ story.title }}</p>
+            <p class="text-sm text-gray-500">{{ story.published_date | date: 'medium' }}</p>
+          </li>
+        </ng-container>
+
+        <ng-template #noStories>
+          <p class="text-gray-500 text-sm">No new stories.</p>
+        </ng-template>
+      </ul>
+    </ng-template>
+
+    <div class="mt-6 text-right">
+      <button
+        class="px-4 py-2 rounded-lg bg-gray-600 text-white hover:bg-gray-700 transition"
+        (click)="closeStoryModal()"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>

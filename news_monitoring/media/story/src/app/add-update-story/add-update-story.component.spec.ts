@@ -1,17 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FetchStoriesComponent } from './fetch-stories.component';
-describe('FetchStoriesComponent', () => {
-  let component: FetchStoriesComponent;
-  let fixture: ComponentFixture<FetchStoriesComponent>;
+import { AddUpdateStoryComponent } from './add-update-story.component';
+
+describe('AddUpdateStoryComponent', () => {
+  let component: AddUpdateStoryComponent;
+  let fixture: ComponentFixture<AddUpdateStoryComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FetchStoriesComponent]
+      imports: [AddUpdateStoryComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(FetchStoriesComponent);
+    fixture = TestBed.createComponent(AddUpdateStoryComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

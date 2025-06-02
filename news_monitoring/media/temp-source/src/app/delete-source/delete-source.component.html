@@ -1,0 +1,30 @@
+<div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+  <div class="bg-white rounded-xl shadow-lg w-full max-w-sm p-6">
+    <h2 class="text-lg font-semibold text-gray-800 mb-4">
+      Delete Source
+    </h2>
+
+    <p class="text-gray-700 mb-4">
+      Are you sure you want to delete <span class="font-semibold">{{ sourceName }}</span>?
+    </p>
+
+    <div *ngIf="error" class="text-red-600 text-sm mb-2">{{ error }}</div>
+
+    <div class="flex justify-end gap-3">
+      <button
+        (click)="cancel()"
+        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
+      >
+        Cancel
+      </button>
+
+      <button
+        (click)="confirmDelete()"
+        [disabled]="loading"
+        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+      >
+        {{ loading ? 'Deleting...' : 'Delete' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SourceListComponent } from './source-list.component';
+import { AddUpdateSourceComponent } from './add-update-source.component';
 
-describe('SourceListComponent', () => {
-  let component: SourceListComponent;
-  let fixture: ComponentFixture<SourceListComponent>;
+describe('AddUpdateSourceComponent', () => {
+  let component: AddUpdateSourceComponent;
+  let fixture: ComponentFixture<AddUpdateSourceComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SourceListComponent]
+      imports: [AddUpdateSourceComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(SourceListComponent);
+    fixture = TestBed.createComponent(AddUpdateSourceComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

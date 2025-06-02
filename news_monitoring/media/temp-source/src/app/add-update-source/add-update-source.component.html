@@ -1,0 +1,94 @@
+<div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-md p-6 relative">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-4">
+      {{ isEdit ? 'Edit Source' : 'Add Source' }}
+    </h2>
+
+    <form (ngSubmit)="onSubmit()" class="space-y-4">
+      <!-- Name -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Name:</label>
+        <input
+          [(ngModel)]="sourceForm.name"
+          name="name"
+          required
+          type="text"
+          class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <!-- URL -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">URL:</label>
+        <input
+          [(ngModel)]="sourceForm.url"
+          name="url"
+          required
+          type="url"
+          class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <!-- Company Search -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Tag Companies:</label>
+        <input
+          type="text"
+          [(ngModel)]="companySearch"
+          name="companySearch"
+          (input)="filterCompanies()"
+          placeholder="Search companies..."
+          class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        
+        <!-- Filtered List -->
+        <ul
+          *ngIf="filteredCompanies.length > 0"
+          class="border mt-2 max-h-40 overflow-auto rounded-lg shadow-sm bg-white divide-y divide-gray-100"
+        >
+          <li
+            *ngFor="let c of filteredCompanies"
+            (click)="addCompany(c)"
+            class="px-4 py-2 hover:bg-blue-100 cursor-pointer"
+          >
+            {{ c.name }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Tagged Companies -->
+      <div class="flex flex-wrap gap-2">
+        <span
+          *ngFor="let c of sourceForm.tagged_companies; let i = index"
+          class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center"
+        >
+          {{ c.name }}
+          <button
+            type="button"
+            (click)="removeCompany(i)"
+            class="ml-2 text-sm text-red-500 hover:text-red-700"
+          >
+            ×
+          </button>
+        </span>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-end gap-3 pt-4">
+        <button
+          type="button"
+          (click)="onClose()"
+          class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          {{ isEdit ? 'Update' : 'Add' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
