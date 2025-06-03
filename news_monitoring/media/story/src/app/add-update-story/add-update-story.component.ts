@@ -80,27 +80,14 @@ export class AddUpdateStoryComponent {
   }
 
   onSubmit(): void {
-
-    // console.log(this.storyForm)
-    const payload: Story = {
-      title: this.storyForm.title,
-      url: this.storyForm.url,
-      body_text: this.storyForm.body_text,
-      published_date: this.storyForm.published_date,
-      tagged_companies: this.storyForm.tagged_companies,
-      tagged_companies_details: this.storyForm.tagged_companies_details,
-    };
-
     if (this.isEdit) {
-      payload.id=this.storyForm.id
-      this.storyService.updateStory(payload.id!, payload).subscribe(() => {
+      this.storyService.updateStory(this.storyForm.id,this.storyForm).subscribe(() => {
         this.refreshStories.emit();
         this.onClose();
       });
     } else {
-      payload.id=Date.now()
-      console.log(payload)
-      this.storyService.createStory(payload).subscribe(() => {
+      this.storyForm.id=Date.now()
+      this.storyService.createStory(this.storyForm).subscribe(() => {
         this.refreshStories.emit();
         this.onClose();
       });

@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DeleteStoryComponent } from './delete-story/delete-story.component';
 import { AddUpdateStoryComponent } from './add-update-story/add-update-story.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-root',
@@ -14,7 +15,6 @@ import { AddUpdateStoryComponent } from './add-update-story/add-update-story.com
   imports: [
     CommonModule,
     FormsModule,
-    DeleteStoryComponent,
     AddUpdateStoryComponent,
   ],
 })
@@ -37,7 +37,7 @@ export class AppComponent {
   showDeleteModal = false;
   storyToDeleteId: number | null = null;
 
-  constructor(private storyService: StoryService) {}
+  constructor(private storyService: StoryService,private modalService: NgbModal) {}
 
   ngOnInit() {
     this.loadStories();
@@ -79,7 +79,7 @@ export class AppComponent {
     );
   }
 
-  // === MODALS: ADD / EDIT ===
+  // === MODAL: ADD / EDIT ===
 
   openModal(story: Story | null = null) {
     this.isEdit = !!story;
@@ -117,31 +117,53 @@ export class AppComponent {
   }
 
   // === DELETE MODAL ===
+ openDeleteModal(id: number) {
+    const modalRef = this.modalService.open(DeleteStoryComponent, {
+      centered: true,
+      backdrop: 'static',
+      keyboard: false
+    });
 
-  openDeleteModal(id: number) {
-    this.storyToDeleteId = id;
-    this.showDeleteModal = true;
-  }
+    modalRef.componentInstance.storyId = id;
 
-  closeDeleteModal() {
-    this.storyToDeleteId = null;
-    this.showDeleteModal = false;
-  }
-
-  confirmDeleteStory() {
-    if (this.storyToDeleteId !== null) {
-      this.storyService.deleteStory(this.storyToDeleteId).subscribe(
+    modalRef.componentInstance.confirmDelete.subscribe(() => {
+      this.storyService.deleteStory(id).subscribe(
         () => {
-          this.closeDeleteModal();
           this.loadStories();
         },
-        (error) => {
-          console.error('Delete failed:', error);
-          alert('Failed to delete story');
-        }
+        (err) => alert('Delete failed')
       );
-    }
+    });
+
+    modalRef.componentInstance.cancelDelete.subscribe(() => {
+      modalRef.dismiss();
+    });
   }
+
+  // openDeleteModal(id: number) {
+  //   this.storyToDeleteId = id;
+  //   this.showDeleteModal = true;
+  // }
+
+  // closeDeleteModal() {
+  //   this.storyToDeleteId = null;
+  //   this.showDeleteModal = false;
+  // }
+
+  // confirmDeleteStory() {
+  //   if (this.storyToDeleteId !== null) {
+  //     this.storyService.deleteStory(this.storyToDeleteId).subscribe(
+  //       () => {
+  //         this.closeDeleteModal();
+  //         this.loadStories();
+  //       },
+  //       (error) => {
+  //         console.error('Delete failed:', error);
+  //         alert('Failed to delete story');
+  //       }
+  //     );
+  //   }
+  // }
 
   // === PAGINATION ===
 

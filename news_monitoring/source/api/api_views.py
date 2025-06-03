@@ -1,3 +1,4 @@
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
@@ -12,47 +13,39 @@ import feedparser
 from rest_framework.decorators import  permission_classes, api_view
 from rest_framework.response import Response
 from news_monitoring.story.models import Story
-from news_monitoring.company.models import Company
 
 
 class SourceViewSet(viewsets.ModelViewSet):
     serializer_class = SourceSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        user = self.request.user
-        # company_qs = Company.objects.only("id", "name")
-        base_queryset = Source.objects.only("id", "name", "url", "created_by")
-
-        if user.is_staff:
-            return base_queryset.prefetch_related(
-                Prefetch("tagged_companies")
-            ).order_by('name')
-        else:
-            return base_queryset.filter(created_by=user).prefetch_related(
-                Prefetch("tagged_companies")
-            ).order_by('name')
-
     def list(self, request):
+        user = request.user
         page_number = int(request.GET.get('page', 1))
         page_size = 3
-        offset = (page_number - 1) * page_size
 
-        full_qs = self.get_queryset()
-        total_items = full_qs.count()
+        base_queryset = Source.objects.select_related('company')
 
-        page_items = list(full_qs[offset:offset + page_size])
+        if not user.is_staff:
+            base_queryset = base_queryset.filter(created_by=user)
 
-        has_next = offset + page_size < total_items
-        has_prev = page_number > 1
+        base_queryset = base_queryset.prefetch_related(
+            Prefetch('tagged_companies')
+        ).order_by('name')
 
-        serializer = SourceSerializer(page_items, many=True)
+        paginator = Paginator(base_queryset, page_size)
+        page = paginator.get_page(page_number)
+
+        serializer = SourceSerializer(page.object_list, many=True)
+
         return Response({
             'results': serializer.data,
-            'page_number': page_number,
-            'has_next': has_next,
-            'has_prev': has_prev,
-            'page_size': page_size
+            'page_number': page.number,
+            'has_next': page.has_next(),
+            'has_prev': page.has_previous(),
+            'page_size': page_size,
+            'total_items': paginator.count,
+            'total_pages': paginator.num_pages,
         })
 
     def perform_create(self, serializer):
@@ -130,7 +123,7 @@ def fetch_stories(request, source_id):
     if not stories_to_create:
         return Response({"message": "No new stories to add."}, status=status.HTTP_200_OK)
 
-   
+
     with transaction.atomic():
         created_stories = Story.objects.bulk_create(stories_to_create)
         throughModel = Story.tagged_companies.through

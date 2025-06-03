@@ -10,5 +10,5 @@ export interface Story {
   body_text: string;
   published_date: string;
   tagged_companies: (Company | number)[];
-  tagged_companies_details: Company[];
+  tagged_companies_details?: Company[];
 }

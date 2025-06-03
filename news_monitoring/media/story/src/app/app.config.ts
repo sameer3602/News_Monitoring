@@ -13,19 +13,21 @@
 //   ]
 // };
 // app.config.ts
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+
+import { ApplicationConfig, provideZoneChangeDetection,importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { routes } from './app.routes';
 import { CsrfInterceptor } from './service/csrf.interceptor';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
+  providers: [importProvidersFrom(NgbModule),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideHttpClient(
       withInterceptorsFromDi()  // ✅ Uses interceptors provided via DI
     ),
     CsrfInterceptor  // ✅ Provide it as a service
-  ]
-};
+  ],
+}

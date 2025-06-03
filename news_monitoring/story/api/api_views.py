@@ -17,19 +17,23 @@ class StoryViewSet(viewsets.ModelViewSet):
         user = self.request.user
         company_id = getattr(user, 'company_id', None)
 
-        tagged_companies_qs = Company.objects.only('id', 'name')
+        base_qs = Story.objects.all()
 
-        stories = Story.objects.select_related('source').prefetch_related(
-            Prefetch('tagged_companies', queryset=tagged_companies_qs)
+
+        if not user.is_staff:
+            if company_id:
+                base_qs = base_qs.filter(tagged_companies__id=company_id)
+            else:
+                base_qs = base_qs.filter(created_by=user)
+
+
+        base_qs = base_qs.prefetch_related(
+            Prefetch('tagged_companies')
         ).annotate(
             tagged_company_names=StringAgg('tagged_companies__name', delimiter=', ', distinct=True)
         )
 
-        if user.is_staff:
-            return stories
-        if company_id:
-            return stories.filter(tagged_companies__id=company_id)
-        return stories.filter(created_by=user)
+        return base_qs
 
     def list(self, request, *args, **kwargs):
         query = request.GET.get('q', '')
@@ -59,6 +63,7 @@ class StoryViewSet(viewsets.ModelViewSet):
             'has_prev': page.has_previous(),
             'query': query,
         })
+    
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         user = request.user
@@ -66,14 +71,14 @@ class StoryViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("You don't have permission to delete this story.")
         return super().destroy(request, *args, **kwargs)
 
-    def perform_create(self, serializer):
-        company = serializer.validated_data.get('company')
-        if not company:
-            company = self.request.user.company
-        serializer.save(added_by=self.request.user, company=company)
-
     def perform_update(self, serializer):
         company = serializer.validated_data.get('company')
         if not company:
             company = self.request.user.company
         serializer.save(updated_by=self.request.user, company=company)
+
+    # def perform_create(self, serializer):
+    #     company = serializer.validated_data.get('company')
+    #     if not company:
+    #         company = self.request.user.company
+    #     serializer.save(added_by=self.request.user, company=company)
