@@ -85,7 +85,21 @@ class StoryViewSet(viewsets.ModelViewSet):
     #     serializer.save(added_by=self.request.user, company=company)
 
     def perform_update(self, serializer):
-        company = serializer.validated_data.get('company')
-        if not company:
-            company = self.request.user.company
-        serializer.save(updated_by=self.request.user, company=company)
+        story = serializer.instance
+        user = self.request.user
+
+        if not user.is_staff and story.created_by != user:
+            raise PermissionDenied("You don't have permission to update this story.")
+
+        validated_data = serializer.validated_data
+        story.title = validated_data.get('title', story.title)
+        story.url = validated_data.get('url', story.url)
+        story.body_text = validated_data.get('body_text', story.body_text)
+        story.published_date = validated_data.get('published_date', story.published_date)
+        story.updated_by = user
+
+        story.save()
+
+        # Handle M2M for tagged_companies
+        if 'tagged_companies_ids' in validated_data:
+            story.tagged_companies.set(validated_data['tagged_companies_ids'])

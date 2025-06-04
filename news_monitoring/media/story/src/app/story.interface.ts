@@ -9,5 +9,6 @@ export interface Story {
   url: string;
   body_text: string;
   published_date: string;
-  tagged_companies:Company[];
+  tagged_companies_ids: number [];
+  tagged_companies_details:Company[];
 }

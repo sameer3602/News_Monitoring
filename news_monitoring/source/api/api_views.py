@@ -1,7 +1,8 @@
 from django.contrib.postgres.aggregates import JSONBAgg
-from django.db.models.expressions import F, Value
+from django.db.models.expressions import F
 from django.db import transaction
 from django.db.models import Prefetch
+from django.db.models import OuterRef, Subquery
 from django.db.models.functions import JSONObject
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -15,6 +16,7 @@ import feedparser
 from rest_framework.decorators import  permission_classes, api_view
 from rest_framework.response import Response
 from news_monitoring.story.models import Story
+from ...company.models import Company
 
 
 class SourceViewSet(viewsets.ModelViewSet):
@@ -24,16 +26,35 @@ class SourceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        # qs=Source.objects.prefetch_related("tagged_companies").order_by('name')
-        qs= (Source.objects.annotate(tagged_companies_details=JSONBAgg(
-                    JSONObject(
-                        id=F("tagged_companies__id"),
-                        name=F("tagged_companies__name")
-                    ),
-                    distinct=True)).order_by("name"))
+
+        # qs = Source.objects.annotate(
+        #         tagged_companies_details=JSONBAgg(
+        #             JSONObject(
+        #                 id=F("tagged_companies__id"),
+        #                 name=F("tagged_companies__name")
+        #             ),
+        #             distinct=True
+        #         )
+        #     ).order_by("name")
+
+        company_subquery = Source.objects.filter(
+            id=OuterRef('id')
+        ).annotate(
+            tags=JSONBAgg(
+                JSONObject(
+                    id=F("tagged_companies__id"),
+                    name=F("tagged_companies__name")
+                ),
+                distinct=True
+            )
+        ).values('tags')[:1]
+
+        qs = Source.objects.only("id","name","url").annotate(tagged_companies_details=Subquery(company_subquery))
+
 
         if not user.is_staff:
             qs = qs.filter(created_by=user)
+
 
         return qs
 

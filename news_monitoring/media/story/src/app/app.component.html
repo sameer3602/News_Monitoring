@@ -65,9 +65,9 @@
           <a [href]="story.url" target="_blank" class="text-blue-600 hover:underline">Link</a>
         </td>
         <td class="border border-gray-300 px-4 py-2">
-          <ng-container *ngIf="story.tagged_companies && story.tagged_companies.length > 0; else noCompanies">
-            <span *ngFor="let company of story.tagged_companies; let i = index">
-              {{ company.name }}<span *ngIf="i < story.tagged_companies.length - 1">, </span>
+          <ng-container *ngIf="story.tagged_companies_details && story.tagged_companies_details.length > 0; else noCompanies">
+            <span *ngFor="let company of story.tagged_companies_details; let i = index">
+              {{ company.name }}<span *ngIf="i < story.tagged_companies_details.length - 1">, </span>
             </span>
           </ng-container>
           <ng-template #noCompanies>
