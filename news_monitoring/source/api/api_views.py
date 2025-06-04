@@ -1,6 +1,8 @@
-from django.core.paginator import Paginator
+from django.contrib.postgres.aggregates import JSONBAgg
+from django.db.models.expressions import F, Value
 from django.db import transaction
 from django.db.models import Prefetch
+from django.db.models.functions import JSONObject
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -17,48 +19,66 @@ from news_monitoring.story.models import Story
 
 class SourceViewSet(viewsets.ModelViewSet):
     serializer_class = SourceSerializer
-    permission_classes = [IsAuthenticated]
+    pagination_size = 3  # Number of items per page
+    total_pages_fixed = 10000
 
-    def list(self, request):
-        user = request.user
-        page_number = int(request.GET.get('page', 1))
-        page_size = 3
-
-        base_queryset = Source.objects.select_related('company')
+    def get_queryset(self):
+        user = self.request.user
+        # qs=Source.objects.prefetch_related("tagged_companies").order_by('name')
+        qs= (Source.objects.annotate(tagged_companies_details=JSONBAgg(
+                    JSONObject(
+                        id=F("tagged_companies__id"),
+                        name=F("tagged_companies__name")
+                    ),
+                    distinct=True)).order_by("name"))
 
         if not user.is_staff:
-            base_queryset = base_queryset.filter(created_by=user)
+            qs = qs.filter(created_by=user)
 
-        base_queryset = base_queryset.prefetch_related(
-            Prefetch('tagged_companies')
-        ).order_by('name')
+        return qs
 
-        paginator = Paginator(base_queryset, page_size)
-        page = paginator.get_page(page_number)
+    def list(self, request, *args, **kwargs):
+        page_number = max(int(request.GET.get('page', 1)), 1)
+        per_page = self.pagination_size
+        queryset = self.get_queryset()
 
-        serializer = SourceSerializer(page.object_list, many=True)
+        start = (page_number - 1) * per_page
+        end = start + per_page
+        sources_slice = list(queryset[start:end + 1])
 
+        has_next = len(sources_slice) > per_page
+        has_prev = page_number > 1
+        sources_page = sources_slice[:per_page]
+
+        serializer = self.get_serializer(sources_page, many=True)
         return Response({
-            'results': serializer.data,
-            'page_number': page.number,
-            'has_next': page.has_next(),
-            'has_prev': page.has_previous(),
-            'page_size': page_size,
-            'total_items': paginator.count,
-            'total_pages': paginator.num_pages,
+            'sources': serializer.data,
+            'page_number': page_number,
+            'has_next': has_next,
+            'has_prev': has_prev,
+            'total_pages': self.total_pages_fixed,
         })
-
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user, updated_by=self.request.user)
 
 
     def perform_update(self, serializer):
-        # Ensure user can only update sources they created unless staff
-        source = self.get_object()
+        source = serializer.instance
         user = self.request.user
+
         if not user.is_staff and source.created_by != user:
             raise PermissionDenied("You don't have permission to update this source.")
-        serializer.save(updated_by=user)
+
+        validated_data = serializer.validated_data
+        source.name = validated_data.get('name', source.name)
+        source.url = validated_data.get('url', source.url)
+        source.updated_by = user
+
+        source.save()
+        # For M2M (tagged_companies)
+        if 'tagged_companies_ids' in validated_data:
+            source.tagged_companies.set(validated_data['tagged_companies_ids'])
+
 
 
     def perform_destroy(self, instance):
@@ -142,3 +162,10 @@ def fetch_stories(request, source_id):
         "stories": story_data,
         "message": f"{len(created_stories)} new stor{'y' if len(created_stories) == 1 else 'ies'} added."
     }, status=status.HTTP_201_CREATED)
+
+
+
+
+
+
+

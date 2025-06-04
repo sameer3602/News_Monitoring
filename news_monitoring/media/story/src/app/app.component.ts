@@ -41,7 +41,6 @@ export class AppComponent {
 
   ngOnInit() {
     this.loadStories();
-    this.loadCompanies();
   }
 
   // === STORY LOADING & FILTERING ===
@@ -82,6 +81,7 @@ export class AppComponent {
   // === MODAL: ADD / EDIT ===
 
   openModal(story: Story | null = null) {
+    this.loadCompanies();
     this.isEdit = !!story;
     this.story = story
       ? { ...story }
@@ -91,8 +91,7 @@ export class AppComponent {
           url: '',
           body_text: '',
           published_date: '',
-          tagged_companies: [],
-          tagged_companies_details: [],
+          tagged_companies: []
         };
     this.show = true;
   }

@@ -15,9 +15,7 @@ export class SourceService {
 
   constructor(private http: HttpClient) {}
 
-  // getSources(): Observable<Source[]> {
-  //   return this.http.get<Source[]>(this.sourcesUrl);
-  // }
+  
   getSources(page: number): Observable<PaginatedSourcesResponse> {
   return this.http.get<PaginatedSourcesResponse>(`${this.sourcesUrl}?page=${page}`);
 }
@@ -26,7 +24,7 @@ export class SourceService {
     return this.http.get<Company[]>(this.companiesUrl);
   }
 
-  addSource(source: { name: string; url: string; tagged_companies: number[] }): Observable<Source> {
+  addSource(source: { name: string; url: string; tagged_companies_ids: number[] }): Observable<Source> {
     return this.http.post<Source>(this.sourcesUrl, source, this._csrfOptions());
   }
 
@@ -38,7 +36,7 @@ export class SourceService {
     return this.http.get<Source>(`${this.sourcesUrl}${id}/`);
   }
 
-  updateSource(id: number, data: { name: string; url: string; tagged_companies: number[] }): Observable<Source> {
+  updateSource(id: number, data: { name: string; url: string; tagged_companies_ids: number[] }): Observable<Source> {
     return this.http.put<Source>(`${this.sourcesUrl}${id}/`, data, this._csrfOptions());
   }
 

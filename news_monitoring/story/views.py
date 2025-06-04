@@ -1,6 +1,5 @@
 from django.contrib import messages
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db import connection
 from django.db.models import Q, TextField
 from django.db.models.aggregates import Aggregate
 from django.shortcuts import render, get_object_or_404, redirect
@@ -113,6 +112,8 @@ def view_stories(request):
 
     stories = Story.objects.select_related('source').annotate(
             tagged_company_names=StringAgg('tagged_companies__name'))
+
+
 
     if user.is_staff:
         pass

@@ -7,7 +7,16 @@ export interface Source {
   id: number;
   name: string;
   url: string;
-  tagged_companies: Company[];  // array of company objects
+  tagged_companies_ids: number [];
+  tagged_companies_details: Company[];  // Now returns array of { id, name } objects
+}
+
+export interface PaginatedSourcesResponse {
+  sources: Source[];         // Fixed to match actual API response key
+  page_number: number;
+  has_next: boolean;
+  has_prev: boolean;
+  total_pages: number;
 }
 
 export interface Story {
@@ -16,15 +25,6 @@ export interface Story {
   url: string;
   published_date: string;
   body_text: string;
-  source: Source | null;  // <-- use Source from source.model.ts
-  tagged_companies:Company[]; // keep consistent too
-}
-
-export interface PaginatedSourcesResponse {
-  results: Source[];
-  page_number: number;
-  has_next: boolean;
-  has_prev: boolean;
-  total_count: number;
-  page_size: number;
+  source: Source | null;
+  tagged_companies: Company[];
 }

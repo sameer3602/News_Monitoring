@@ -37,7 +37,7 @@ export class AddUpdateStoryComponent {
       this.allcompanies = companies;
 
       if (this.isEdit && this.storyToEdit) {
-        const taggedCompanies = this.storyToEdit.tagged_companies_details || [];
+        const taggedCompanies = this.storyToEdit.tagged_companies || [];
 
         this.storyForm = {
           id: this.storyToEdit.id,

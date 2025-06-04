@@ -24,7 +24,8 @@ export class AddUpdateSourceComponent implements OnInit {
   sourceForm = {
     name: '',
     url: '',
-    tagged_companies: [] as Company[]
+    tagged_companies_ids:[] as number [],
+    tagged_companies_details: [] as Company[]
   };
 
   ngOnInit() {
@@ -32,44 +33,92 @@ export class AddUpdateSourceComponent implements OnInit {
       this.sourceForm = {
         name: this.sourceData.name,
         url: this.sourceData.url,
-        tagged_companies: [...this.sourceData.tagged_companies]
+        tagged_companies_ids:[... this.sourceData.tagged_companies_ids],
+        tagged_companies_details: [...this.sourceData.tagged_companies_details]
       };
     }
   }
 
-  onSubmit() {
-    if (!this.sourceForm.name || !this.sourceForm.url || this.sourceForm.tagged_companies.length === 0) {
-      alert('All fields required');
-      return;
-    }
+  // onSubmit() {
+  // if (
+  //   !this.sourceForm.name ||
+  //   !this.sourceForm.url ||
+  //   this.sourceForm.tagged_companies_details.length === 0
+  // ) {
+  //   alert('All fields required');
+  //   return;
+  // }
 
-    const payload = {
-      name: this.sourceForm.name,
-      url: this.sourceForm.url,
-      tagged_companies: this.sourceForm.tagged_companies.map(c => c.id)
-    };
+  // const payload = {
+  //   name: this.sourceForm.name,
+  //   url: this.sourceForm.url,
+  //   tagged_companies_details: this.sourceForm.tagged_companies_details.map(c => ({
+  //     id: c.id,
+  //     name: c.name
+  //   }))
+  // };
 
-    this.save.emit(payload);
+
+//   this.save.emit(payload);
+// }
+onSubmit() {
+  if (
+    !this.sourceForm.name ||
+    !this.sourceForm.url ||
+    this.sourceForm.tagged_companies_details.length === 0
+  ) {
+    alert('All fields required');
+    return;
   }
+
+  // Extract ids from tagged_companies_details
+  this.sourceForm.tagged_companies_ids = this.sourceForm.tagged_companies_details.map(c => c.id);
+
+  const payload = {
+    name: this.sourceForm.name,
+    url: this.sourceForm.url,
+    tagged_companies_ids: this.sourceForm.tagged_companies_ids,
+    tagged_companies_details: this.sourceForm.tagged_companies_details.map(c => ({
+      id: c.id,
+      name: c.name
+    }))
+  };
+
+  this.save.emit(payload);
+}
+
 
   filterCompanies() {
     const search = this.companySearch.toLowerCase();
     this.filteredCompanies = this.companies.filter(
       c =>
         c.name.toLowerCase().includes(search) &&
-        !this.sourceForm.tagged_companies.some(sel => sel.id === c.id)
+        !this.sourceForm.tagged_companies_details.some(sel => sel.id === c.id)
     );
   }
 
+  // addCompany(company: Company) {
+  //   this.sourceForm.tagged_companies_details.push(company);
+  //   this.companySearch = '';
+  //   this.filteredCompanies = [];
+  // }
   addCompany(company: Company) {
-    this.sourceForm.tagged_companies.push(company);
-    this.companySearch = '';
-    this.filteredCompanies = [];
-  }
+  this.sourceForm.tagged_companies_details.push(company);
+  this.sourceForm.tagged_companies_ids.push(company.id); // sync ID
+  this.companySearch = '';
+  this.filteredCompanies = [];
+}
 
+
+  // removeCompany(index: number) {
+  //   this.sourceForm.tagged_companies_details.splice(index, 1);
+  // }
+  
   removeCompany(index: number) {
-    this.sourceForm.tagged_companies.splice(index, 1);
-  }
+  const removed = this.sourceForm.tagged_companies_details.splice(index, 1)[0];
+  this.sourceForm.tagged_companies_ids = this.sourceForm.tagged_companies_ids.filter(id => id !== removed.id);
+}
+
 
   onClose() {
     this.close.emit();

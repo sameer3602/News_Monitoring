@@ -19,11 +19,11 @@ export class DeleteStoryComponent {
 
   onConfirm() {
     this.confirmDelete.emit();
-    this.activeModal.close(); // closes the modal
+    this.activeModal.close(); // closes-modal
   }
 
   onCancel() {
     this.cancelDelete.emit();
-    this.activeModal.dismiss(); // dismisses the modal
+    this.activeModal.dismiss(); // dismisses-modal
   }
 }

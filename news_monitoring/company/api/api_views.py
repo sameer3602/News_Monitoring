@@ -5,6 +5,6 @@ from news_monitoring.company.models import Company
 
 
 class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Company.objects.all()
+    queryset = Company.objects.only("id","name")
     serializer_class = CompanySerializer
     permission_classes = [IsAuthenticated]

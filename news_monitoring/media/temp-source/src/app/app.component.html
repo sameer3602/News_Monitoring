@@ -35,7 +35,7 @@
           >
         </td>
         <td class="px-4 py-2 border-b border-gray-200 break-words">
-          <span *ngFor="let c of source.tagged_companies; let last = last">
+          <span *ngFor="let c of source.tagged_companies_details; let last = last">
             {{ c.name }}<span *ngIf="!last">, </span>
           </span>
         </td>

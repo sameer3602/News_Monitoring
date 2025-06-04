@@ -1,24 +1,27 @@
 from rest_framework import serializers
-
-from news_monitoring.company.api.serializers import CompanySerializer
 from news_monitoring.story.models import Story
-
+from news_monitoring.company.models import Company
 
 class StorySerializer(serializers.ModelSerializer):
-    tagged_companies_details = CompanySerializer(source='tagged_companies', many=True, read_only=True)
+    # Write: Accept list of company IDs
+    tagged_companies_ids = serializers.ListField(
+        child=serializers.IntegerField(), write_only=True, required=False
+    )
+
+    # Read: Precomputed annotation used for fast access (or fallback to model relation)
+    tagged_companies_details = serializers.ListField(read_only=True)
 
     class Meta:
         model = Story
         fields = [
             'id', 'title', 'url', 'body_text', 'published_date',
-            'tagged_companies', 'tagged_companies_details',
+            'tagged_companies_details',        # Read: [{id, name}]
+            'tagged_companies_ids'     # Write: [1, 2, 3]
         ]
 
     def create(self, validated_data):
         print("VALIDATED DATA FOR CREATE:", validated_data)
         return super().create(validated_data)
-
-
 
 
 

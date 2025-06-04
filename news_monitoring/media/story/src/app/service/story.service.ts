@@ -61,12 +61,12 @@ export class StoryService {
   private _normalizeStory(story: Story): any {
     return {
       ...story,
-      tagged_companies: Array.isArray(story.tagged_companies_details)
-        ? story.tagged_companies_details.map((company: any) =>
+      tagged_companies: Array.isArray(story.tagged_companies)
+        ? story.tagged_companies.map((company: any) =>
             typeof company === 'object' ? company.id : company
           )
         : [],
-      tagged_companies_details: story.tagged_companies_details || [],
+      tagged_companies_details: story.tagged_companies || [],
     };
   }
 
